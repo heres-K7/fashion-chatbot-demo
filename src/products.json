@@ -1,0 +1,353 @@
+[
+  {
+    "id": 1,
+    "name": "Denim",
+    "category": "Jacket",
+    "price": 49.99,
+    "stock": 50,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["navy", "black", "grey"],
+    "description": "Classic denim jacket, perfect for casual wear."
+  },
+  {
+    "id": 2,
+    "name": "Leather",
+    "category": "Jacket",
+    "price": 79.99,
+    "stock": 50,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["black", "brown"],
+    "description": "Classic black or brown leather jacket for a bold, stylish look."
+  },
+  {
+    "id": 3,
+    "name": "Rain Jacket",
+    "category": "Jacket",
+    "price": 39.99,
+    "stock": 100,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["navy"],
+    "description": "Waterproof, perfect for wet weather."
+  },
+  {
+    "id": 4,
+    "name": "Wind breaker",
+    "category": "Jacket",
+    "price": 49.99,
+    "stock": 15,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["navy"],
+    "description": "Lightweight, designed to block wind and light rain."
+  },
+
+
+
+
+
+
+
+  {
+    "id": 5,
+    "name": "Plain T-Shirt",
+    "category": "T-Shirt",
+    "price": 19.99,
+    "stock": 200,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["black ","navy", "off white"],
+    "description": "Simple and comfortable plain T-shirt available in black, navy, and off-white. Perfect for everyday casual wear or layering under jackets and shirts."
+  },
+  {
+    "id": 6,
+    "name": "Mona Lisa T-Shirt",
+    "category": "T-Shirt",
+    "price": 29.99,
+    "stock": 77,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["black"],
+    "description": "Stylish black T-shirt featuring a centered Mona Lisa print. Made from soft cotton, perfect for art lovers and casual outfits."
+  },
+  {
+    "id": 7,
+    "name": "Graphic Streetwear T-Shirt",
+    "category": "T-Shirt",
+    "price": 19.99,
+    "stock": 100,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["white", "grey"],
+    "description": "Modern streetwear-style T-shirt with bold front graphic print. Lightweight and comfortable, ideal for casual or urban looks."
+  },
+  {
+    "id": 8,
+    "name": "Striped Casual T-Shirt",
+    "category": "T-Shirt",
+    "price": 19.99,
+    "stock": 100,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["blue-white", "red-white"],
+    "description": "Casual striped T-shirt available in blue-white or red-white patterns. Breathable fabric for a relaxed, everyday style."
+  },
+
+
+
+
+
+
+
+
+  {
+    "id": 9,
+    "name": "Black Hoodie",
+    "category": "Hoodie",
+    "price": 39.99,
+    "stock": 7,
+    "sizes": ["M", "L", "XL"],
+    "colors": ["black"],
+    "description": "Warm and soft black hoodie with front pocket."
+  },
+  {
+    "id": 10,
+    "name": "Grey Zip-Up Hoodie",
+    "category": "Hoodie",
+    "price": 42.99,
+    "stock": 90,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["grey", "charcoal"],
+    "description": "Comfortable zip-up hoodie available in grey and charcoal. Soft fabric with front pockets and adjustable hood."
+  },
+  {
+    "id": 11,
+    "name": "Blue Graphic Hoodie",
+    "category": "Hoodie",
+    "price": 44.99,
+    "stock": 19,
+    "sizes": ["M", "L", "XL"],
+    "colors": ["navy", "sky blue"],
+    "description": "Stylish blue hoodie with front graphic print. Great for casual wear with a pop of color."
+  },
+  {
+    "id": 12,
+    "name": "Beige Oversized Hoodie",
+    "category": "Hoodie",
+    "price": 46.99,
+    "stock": 5,
+    "sizes": ["L", "XL", "XXL"],
+    "colors": ["beige", "cream"],
+    "description": "Cozy oversized hoodie in beige and cream tones. Soft fleece interior for a relaxed and comfy fit."
+  },
+
+
+
+
+
+
+
+
+  {
+    "id": 13,
+    "name": "Classic White Collared Shirt",
+    "category": "Shirt",
+    "price": 34.99,
+    "stock": 8,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["white", "light blue"],
+    "description": "Formal button-up shirt with a crisp collar. Perfect for office wear or formal occasions."
+  },
+  {
+    "id": 14,
+    "name": "Casual No-Collar Shirt",
+    "category": "Shirt",
+    "price": 29.99,
+    "stock": 10,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["olive", "navy", "beige"],
+    "description": "Relaxed no-collar shirt made from soft fabric. Great for casual outings or summer days."
+  },
+
+
+
+
+
+
+
+
+  {
+    "id": 15,
+    "name": "Formal Black Trousers",
+    "category": "Bottoms",
+    "price": 44.99,
+    "stock": 8,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["black", "navy"],
+    "description": "Classic black and navy trousers designed for formal and office wear. Made from premium stretch fabric for comfort."
+  },
+  {
+    "id": 16,
+    "name": "Grey Joggers",
+    "category": "Bottoms",
+    "price": 34.99,
+    "stock": 12,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["grey", "black"],
+    "description": "Soft cotton joggers perfect for lounging or light workouts. Features drawstring waist and side pockets."
+  },
+  {
+    "id": 17,
+    "name": "Blue Slim-Fit Jeans",
+    "category": "Bottoms",
+    "price": 54.99,
+    "stock": 10,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["blue", "dark blue"],
+    "description": "Classic slim-fit jeans with a modern cut. Durable denim with a comfortable fit for everyday wear."
+  },
+  {
+    "id": 18,
+    "name": "Cargo Pants",
+    "category": "Bottoms",
+    "price": 49.99,
+    "stock": 9,
+    "sizes": ["M", "L", "XL"],
+    "colors": ["olive", "black"],
+    "description": "Trendy cargo pants featuring multiple pockets. Ideal for casual and streetwear looks."
+  },
+
+
+
+
+
+
+
+  {
+    "id": 19,
+    "name": "White Sneakers",
+    "category": "Shoes",
+    "price": 59.99,
+    "stock": 10,
+    "sizes": ["39", "40", "41", "42", "43", "44"],
+    "colors": ["white"],
+    "description": "Classic white sneakers for everyday wear. Lightweight and comfortable with durable rubber soles."
+  },
+  {
+    "id": 20,
+    "name": "Black Running Shoes",
+    "category": "Shoes",
+    "price": 69.99,
+    "stock": 8,
+    "sizes": ["40", "41", "42", "43", "44"],
+    "colors": ["black", "grey"],
+    "description": "Breathable running shoes with cushioned soles for maximum comfort and performance."
+  },
+  {
+    "id": 21,
+    "name": "Brown Leather Boots",
+    "category": "Shoes",
+    "price": 89.99,
+    "stock": 6,
+    "sizes": ["41", "42", "43", "44", "45"],
+    "colors": ["brown", "dark brown"],
+    "description": "Durable leather boots suitable for both casual and semi-formal occasions."
+  },
+  {
+    "id": 22,
+    "name": "Slip-On Canvas Shoes",
+    "category": "Shoes",
+    "price": 49.99,
+    "stock": 9,
+    "sizes": ["39", "40", "41", "42", "43"],
+    "colors": ["navy", "black"],
+    "description": "Comfortable and easy-to-wear canvas slip-ons, perfect for daily casual use."
+  },
+
+
+
+
+
+
+
+  {
+    "id": 23,
+    "name": "Black Leather Belt",
+    "category": "Accessories",
+    "price": 24.99,
+    "stock": 15,
+    "colors": ["black", "brown"],
+    "description": "Classic leather belt with silver buckle. Pairs well with jeans and trousers."
+  },
+  {
+    "id": 24,
+    "name": "Baseball Cap",
+    "category": "Accessories",
+    "price": 19.99,
+    "stock": 20,
+    "colors": ["navy", "black", "white"],
+    "description": "Adjustable cotton baseball cap available in multiple colors."
+  },
+  {
+    "id": 25,
+    "name": "Silver Wristwatch",
+    "category": "Accessories",
+    "price": 79.99,
+    "stock": 7,
+    "colors": ["silver"],
+    "description": "Stylish stainless steel wristwatch with a minimalist design."
+  },
+  {
+    "id": 26,
+    "name": "Canvas Backpack",
+    "category": "Accessories",
+    "price": 39.99,
+    "stock": 10,
+    "colors": ["beige", "black", "green"],
+    "description": "Durable canvas backpack with multiple compartments for everyday use."
+  },
+
+
+
+
+
+
+
+
+  {
+    "id": 27,
+    "name": "Ankle Socks Pack (3 Pairs)",
+    "category": "Socks",
+    "price": 12.99,
+    "stock": 25,
+    "colors": ["white", "black", "grey"],
+    "description": "Soft cotton ankle socks in a pack of 3. Ideal for sports or daily wear."
+  },
+  {
+    "id": 28,
+    "name": "Patterned Crew Socks",
+    "category": "Socks",
+    "price": 14.99,
+    "stock": 18,
+    "colors": ["multi-color"],
+    "description": "Fun patterned crew socks made from breathable fabric for all-day comfort."
+  },
+  {
+    "id": 29,
+    "name": "Wool Winter Socks",
+    "category": "Socks",
+    "price": 16.99,
+    "stock": 12,
+    "colors": ["black","grey", "brown"],
+    "description": "Thick wool socks designed to keep your feet warm in cold weather."
+  },
+  {
+    "id": 30,
+    "name": "No-Show Socks (Pack of 3)",
+    "category": "Socks",
+    "price": 11.99,
+    "stock": 20,
+    "colors": ["black", "white"],
+    "description": "Comfortable no-show socks perfect for sneakers and casual shoes."
+  }
+
+
+
+
+
+
+]
