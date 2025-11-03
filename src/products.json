@@ -232,7 +232,7 @@
     "name": "Black Running Shoes",
     "category": "Shoes",
     "price": 69.99,
-    "stock": 8,
+    "stock": 18,
     "sizes": ["40", "41", "42", "43", "44"],
     "colors": ["black", "grey"],
     "description": "Breathable running shoes with cushioned soles for maximum comfort and performance."
@@ -242,7 +242,7 @@
     "name": "Brown Leather Boots",
     "category": "Shoes",
     "price": 89.99,
-    "stock": 6,
+    "stock": 20,
     "sizes": ["41", "42", "43", "44", "45"],
     "colors": ["brown", "dark brown"],
     "description": "Durable leather boots suitable for both casual and semi-formal occasions."

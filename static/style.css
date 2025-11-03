@@ -1,0 +1,137 @@
+/* General page setup */
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Main chat box container */
+.chat-container {
+    width: 400px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Title */
+h2 {
+    background-color: #0078D7;
+    color: white;
+    margin: 0;
+    padding: 15px;
+    text-align: center;
+}
+
+/* Chat area where messages appear */
+.chat-box {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #f9f9f9;
+}
+
+/* Chat bubble base */
+.chat-bubble {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 15px;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+/* User messages (right side) */
+.chat-bubble.user {
+    align-self: flex-end;
+    background-color: #0078D7;
+    color: white;
+    border-bottom-right-radius: 0;
+}
+
+/* Bot messages (left side) */
+.chat-bubble.bot {
+    align-self: flex-start;
+    background-color: #e5e5ea;
+    color: #000;
+    border-bottom-left-radius: 0;
+}
+
+/* Input area */
+.input-area {
+    display: flex;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+    background-color: #fff;
+}
+
+/* Text input */
+.input-area input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    outline: none;
+}
+
+/* Send button */
+.input-area button {
+    margin-left: 10px;
+    background-color: #0078D7;
+    border: none;
+    color: white;
+    border-radius: 20px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.input-area button:hover {
+    background-color: #005fa3;
+}
+/* Typing indicator (three dots animation) */
+.typing {
+    display: flex;
+    align-items: center;
+}
+
+.typing .dot {
+    height: 8px;
+    width: 8px;
+    background-color: #555;
+    border-radius: 50%;
+    margin: 0 3px;
+    animation: blink 1.4s infinite both;
+}
+
+.typing .dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.typing .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 0.2;
+    }
+    20% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0.2;
+    }
+}
