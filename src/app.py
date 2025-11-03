@@ -1,6 +1,8 @@
 import os
 import json
 
+
+
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -15,6 +17,12 @@ app = Flask(
 with open(os.path.join(BASE_DIR, "products.json"), "r") as file:
     products = json.load(file)
 
+
+#memorise last mentioned text
+chat_context = {
+    "last_category": None,
+    "last_product": None
+}
 
 
 
@@ -48,15 +56,28 @@ def get_product_colors(name):
 
 
 
+def search_products_by_keyword(keyword):
+    keyword = keyword.lower()
+    results = []
+
+    for product in products:
+        #keyword matches category, colouur, or product name
+        if (keyword in product["category"].lower() or
+                any(keyword in color.lower() for color in product["colors"]) or
+                keyword in product["name"].lower()):
+            results.append(product)
+
+    return results
+
 
 
 def chatbot_reply(user_input):
     user_input = user_input.lower()
 
-
     greetings = ["hi", "hello", "hey", "hya", "good morning", "good afternoon", "good evening"]
-    if any(greet in user_input for greet in greetings):
-        return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today?"
+    for greet in greetings:
+        if user_input.strip() == greet or user_input.startswith(greet + " "):
+            return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today?"
 
 
     if "open" in user_input or "hour" in user_input or "time" in user_input:
@@ -69,7 +90,7 @@ def chatbot_reply(user_input):
         return "🚚 We offer free delivery on orders over £50, and standard shipping takes 3–5 business days."
 
     if "return" in user_input or "refund" in user_input:
-        return "↩️ You can return any item within 14 days of purchase, as long as it's the price tag still there and in original packaging quality."
+        return "↩️ You can return any item within 14 days of purchase, as long as it's unworn and in original packaging."
 
     if "thank" in user_input:
         return "You're welcome! 😊 Let me know if you need help with anything else."
@@ -78,36 +99,75 @@ def chatbot_reply(user_input):
         return "Goodbye! 👋 Have a great day."
 
     if "how are you" in user_input:
-        return "I'm just a bunch of code, but I'm feeling helpful today! 😄 How can I assist you?"
+        return "I'm just a helpful bot 😄 How can I assist you today?"
 
+    keywords = ["jacket", "hoodie", "t-shirt", "shirt", "shoe", "accessory",
+                "sock", "pant", "trouser", "jean", "bottom"]
+    for word in keywords:
+        if word in user_input:
+            found = search_products_by_keyword(word)
+            if found:
+                #remember context instead of replying indivually
+                chat_context["last_category"] = word
+                chat_context["last_product"] = None
+                response = f"<b>Here are our {word}s:</b><br>"
+                for product in found:
+                    response += f"• {product['name']} (£{product['price']:.2f})<br>"
+                return response
+            else:
+                return f"Sorry, we don't have any {word}s in stock right now."
 
-    if "price" in user_input:
-        # match name of the products, once match the bot replies //look for api. ai free apiin google
+    if ("color" in user_input or "colors" in user_input or
+            "colour" in user_input or "colours" in user_input):
+
+        #user mentioned a specific product in the same message
+        for product in products:
+            if product["name"].lower() in user_input:
+                chat_context["last_product"] = product["name"]
+                return get_product_colors(product["name"])
+
+        #user is asking follow-up after a category
+        if chat_context["last_category"]:
+            found = search_products_by_keyword(chat_context["last_category"])
+            colors = set()
+            for product in found:
+                for color in product["colors"]:
+                    colors.add(color.capitalize())
+            color_list = ", ".join(colors)
+            return f"Our {chat_context['last_category']}s come in these colors: {color_list}."
+
+        return "Which product would you like to know the colors of?"
+
+    if "size" in user_input or "sizes" in user_input:
+        for product in products:
+            if product["name"].lower() in user_input:
+                chat_context["last_product"] = product["name"]
+                return get_product_sizes(product["name"])
+
+        if chat_context["last_category"]:
+            found = search_products_by_keyword(chat_context["last_category"])
+            sizes = set()
+            for product in found:
+                for size in product["sizes"]:
+                    sizes.add(size.upper())
+            size_list = ", ".join(sorted(sizes))
+            return f"Our {chat_context['last_category']}s are available in these sizes: {size_list}."
+
+        return "Which product would you like to know the sizes of?"
+
+    if "price" in user_input or "cost" in user_input:
         for product in products:
             if product["name"].lower() in user_input:
                 return get_product_price(product["name"])
         return "Which product would you like the price for?"
 
-    elif "stock" in user_input or "quantity" in user_input:
+    if "stock" in user_input or "quantity" in user_input or "available" in user_input:
         for product in products:
             if product["name"].lower() in user_input:
                 return get_product_stock(product["name"])
         return "Which product would you like to check stock for?"
 
-    elif "size" in user_input or "sizes" in user_input:
-        for product in products:
-            if product["name"].lower() in user_input:
-                return get_product_sizes(product["name"])
-        return "Which product would you like the sizes for?"
-
-    elif "colour" in user_input or "colours" in user_input or "color" in user_input or "colors" in user_input:
-        for product in products:
-            if product["name"].lower() in user_input:
-                return get_product_colors(product["name"])
-        return "Which product would you like to know the colours of?"
-
-    else:
-        return "I'm sorry, I didn't quite understand that. 🤔 I can help with product details, store hours, or returns. What would you like to know?"
+    return "I'm sorry, I didn't quite understand that. 🤔 I can help with product details, store hours, or returns. What would you like to know?"
 
 
 @app.route("/")
@@ -123,6 +183,7 @@ def get_chatbot_response():
 if __name__ == "__main__":
     app.run(debug=True)
 
+print("DEBUG:", chat_context)
 
 
 '''while True:
