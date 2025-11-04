@@ -136,7 +136,7 @@ def chatbot_reply(user_input):
             color_list = ", ".join(colors)
             return f"Our {chat_context['last_category']}s come in these colors: {color_list}."
 
-        return "Which product would you like to know the colors of?"
+        return "Which product would you like to know the colours of?"
 
     if "size" in user_input or "sizes" in user_input:
         for product in products:
