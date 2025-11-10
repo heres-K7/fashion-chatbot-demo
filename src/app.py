@@ -1,11 +1,8 @@
+from flask import Flask, render_template, request, jsonify
+from symspellpy import SymSpell, Verbosity
 import os
 import json
 
-
-
-from flask import Flask, render_template, request, jsonify
-
-app = Flask(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app = Flask(
@@ -14,17 +11,76 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "../static")
 )
 
+
 with open(os.path.join(BASE_DIR, "products.json"), "r") as file:
     products = json.load(file)
+
+sym_spell = SymSpell(max_dictionary_edit_distance=2, prefix_length=7)
+
+import pkg_resources
+dictionary_path = pkg_resources.resource_filename(
+    "symspellpy", "frequency_dictionary_en_82_765.txt"
+)
+sym_spell.load_dictionary(dictionary_path, 0, 1)
+
+custom_store_words = [
+    "monalisa", "hoodie", "hoodies", "denim", "tshirt", "t-shirt",
+    "jacket", "jackets", "sneaker", "sneakers", "trouser", "trousers",
+    "jean", "jeans", "puffer", "zipper", "fashion", "accessory",
+    "accessories", "store", "sock", "socks", "shoe", "shoes"
+]
+custom_greetings = [
+    "hi", "hello", "hey", "hiya", "hya",
+    "good", "morning", "afternoon", "evening",
+    "bye", "goodbye", "thanks", "thank", "thankyou"
+]
+# adding the products to the dictionary
+for p in products:
+    sym_spell.create_dictionary_entry(p["name"].lower(), 1)
+    sym_spell.create_dictionary_entry(p["category"].lower(), 1)
+
+# adding the extra words to dictionary
+for w in custom_store_words:
+    sym_spell.create_dictionary_entry(w.lower(), 1)
+#....................................
+for g in custom_greetings:
+    sym_spell.create_dictionary_entry(g.lower(), 1)
+
+
+category_aliases = {
+    "jacket": "jacket",
+    "jackets": "jacket",
+    "hoodie": "hoodie",
+    "hoodies": "hoodie",
+    "t-shirt": "t-shirt",
+    "tshirts": "t-shirt",
+    "t shirt": "t-shirt",
+    "shirt": "shirt",
+    "shirts": "shirt",
+    "shoe": "shoe",
+    "shoes": "shoe",
+    "accessory": "accessory",
+    "accessories": "accessory",
+    "sock": "sock",
+    "socks": "sock",
+    "bottom": "bottom",
+    "bottoms": "bottom",
+    "jean": "jean",
+    "jeans": "jean",
+    "trouser": "trouser",
+    "trousers": "trouser",
+    "pant": "pant",
+    "pants": "pant"
+}
 
 
 #memorise last mentioned text
 chat_context = {
     "last_category": None,
-    "last_product": None
+    "last_product": None,
+    "last_intent": None,
+    "last_product_list": []
 }
-
-
 
 
 #finding the products functions
@@ -55,78 +111,100 @@ def get_product_colors(name):
     return "Sorry, that product is not available."
 
 
-
+#search the products by keywords for single product and a whole catogory to list all for the user
 def search_products_by_keyword(keyword):
     keyword = keyword.lower()
     results = []
 
+    plural_forms = set()
+    if keyword.endswith("y"):
+        plural_forms.add(keyword[:-1] + "ies")
+    else:
+        plural_forms.add(keyword + "s")
+    plural_forms.add(keyword)
+
     for product in products:
-        #keyword matches category, colouur, or product name
-        if (keyword in product["category"].lower() or
-                any(keyword in color.lower() for color in product["colors"]) or
-                keyword in product["name"].lower()):
+        product_category = product["category"].lower()
+        product_name = product["name"].lower()
+        product_colors = [color.lower() for color in product["colors"]]
+
+        if any(
+                form in product_category
+                or any(form in color for color in product_colors)
+                or form in product_name
+                for form in plural_forms
+        ):
             results.append(product)
 
     return results
+
+
+def pluralize(word):
+
+    word = word.lower()
+    if word.endswith("y"):
+        return word[:-1] + "ies"
+    elif word.endswith("s"):
+        return word
+    else:
+        return word + "s"
 
 
 
 def chatbot_reply(user_input):
     user_input = user_input.lower()
 
+    tokens = user_input.split()
+    corrected = []
+    for word in tokens:
+        suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
+        corrected.append(suggestions[0].term if suggestions else word)
+    user_input = " ".join(corrected)
+    print("Corrected input:", user_input)  # for debugging, to see the corrected input
+
     greetings = ["hi", "hello", "hey", "hya", "good morning", "good afternoon", "good evening"]
+
     for greet in greetings:
         if user_input.strip() == greet or user_input.startswith(greet + " "):
+            chat_context["last_intent"] = None
             return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today?"
-
 
     if "open" in user_input or "hour" in user_input or "time" in user_input:
         return "🕒 Our store is open Monday to Saturday, from 9 AM to 8 PM."
 
-    if "location" in user_input or "where" in user_input:
+    elif "location" in user_input or "where" in user_input:
         return "📍 Our store is located at B15 2TT Fashion Street, Birmingham."
 
-    if "delivery" in user_input or "shipping" in user_input:
+    elif "delivery" in user_input or "shipping" in user_input:
         return "🚚 We offer free delivery on orders over £50, and standard shipping takes 3–5 business days."
 
-    if "return" in user_input or "refund" in user_input:
+    elif "return" in user_input or "refund" in user_input:
         return "↩️ You can return any item within 14 days of purchase, as long as it's unworn and in original packaging."
 
-    if "thank" in user_input:
+    elif "thank" in user_input:
+        chat_context["last_intent"] = None
         return "You're welcome! 😊 Let me know if you need help with anything else."
 
-    if "bye" in user_input or "goodbye" in user_input or "see you" in user_input:
+    elif "bye" in user_input or "goodbye" in user_input or "see you" in user_input:
+        chat_context["last_intent"] = None
         return "Goodbye! 👋 Have a great day."
 
-    if "how are you" in user_input:
+    elif "how are you" in user_input:
+        chat_context["last_intent"] = None
         return "I'm just a helpful bot 😄 How can I assist you today?"
 
-    keywords = ["jacket", "hoodie", "t-shirt", "shirt", "shoe", "accessory",
-                "sock", "pant", "trouser", "jean", "bottom"]
-    for word in keywords:
-        if word in user_input:
-            found = search_products_by_keyword(word)
-            if found:
-                #remember context instead of replying indivually
-                chat_context["last_category"] = word
-                chat_context["last_product"] = None
-                response = f"<b>Here are our {word}s:</b><br>"
-                for product in found:
-                    response += f"• {product['name']} (£{product['price']:.2f})<br>"
-                return response
-            else:
-                return f"Sorry, we don't have any {word}s in stock right now."
 
-    if ("color" in user_input or "colors" in user_input or
-            "colour" in user_input or "colours" in user_input):
 
-        #user mentioned a specific product in the same message
+    elif ("color" in user_input or "colors" in user_input or
+          "colour" in user_input or "colours" in user_input):
+        if chat_context["last_product"]:
+            return get_product_colors(chat_context["last_product"])
+
         for product in products:
             if product["name"].lower() in user_input:
                 chat_context["last_product"] = product["name"]
                 return get_product_colors(product["name"])
 
-        #user is asking follow-up after a category
         if chat_context["last_category"]:
             found = search_products_by_keyword(chat_context["last_category"])
             colors = set()
@@ -138,7 +216,10 @@ def chatbot_reply(user_input):
 
         return "Which product would you like to know the colours of?"
 
-    if "size" in user_input or "sizes" in user_input:
+    elif "size" in user_input or "sizes" in user_input:
+        if chat_context["last_product"]:
+            return get_product_sizes(chat_context["last_product"])
+
         for product in products:
             if product["name"].lower() in user_input:
                 chat_context["last_product"] = product["name"]
@@ -155,19 +236,133 @@ def chatbot_reply(user_input):
 
         return "Which product would you like to know the sizes of?"
 
-    if "price" in user_input or "cost" in user_input:
+    elif "price" in user_input or "cost" in user_input:
+        chat_context["last_intent"] = "price"
+        if chat_context["last_product"]:
+            return get_product_price(chat_context["last_product"])
+        cleaned_input = user_input.replace(" ", "").lower()
         for product in products:
-            if product["name"].lower() in user_input:
+            product_name_no_spaces = product["name"].lower().replace(" ", "")    #if some say monalisa instead of mona lisa
+            product_name_words = product["name"].lower().split()
+
+            if (product_name_no_spaces in cleaned_input or
+                any(word in cleaned_input for word in product_name_words)):
+                chat_context["last_product"] = product["name"]
                 return get_product_price(product["name"])
+
+        if chat_context["last_product"]:
+            return get_product_price(chat_context["last_product"])
+
+        if chat_context["last_category"]:
+            return f"Which {chat_context['last_category']} would you like to know its price?"
+
         return "Which product would you like the price for?"
 
-    if "stock" in user_input or "quantity" in user_input or "available" in user_input:
+    elif "stock" in user_input or "quantity" in user_input or "available" in user_input or "availability" in user_input:
+        if chat_context["last_product"]:
+            return get_product_stock(chat_context["last_product"])
+
         for product in products:
             if product["name"].lower() in user_input:
+                chat_context["last_product"] = product["name"]
                 return get_product_stock(product["name"])
-        return "Which product would you like to check stock for?"
+        if chat_context["last_category"]:
+            return f"Would you like me to check stock for our {chat_context['last_category']}s?"
+        else:
+            return "Could you tell me which product you'd like me to check stock for?"
 
-    return "I'm sorry, I didn't quite understand that. 🤔 I can help with product details, store hours, or returns. What would you like to know?"
+
+
+    elif any(
+        product["name"].lower().replace(" ", "") in user_input.replace(" ", "") or
+        user_input.replace(" ", "") in product["name"].lower().replace(" ", "") or
+        product["name"].lower() in user_input
+        for product in products
+    ):
+
+
+        for product in products:
+            product_name_no_spaces = product["name"].lower().replace(" ", "")
+            user_no_spaces = user_input.replace(" ", "")
+
+            if (
+                product_name_no_spaces in user_no_spaces or
+                user_no_spaces in product_name_no_spaces or
+                product["name"].lower() in user_input
+            ):
+                chat_context["last_product"] = product["name"]
+
+                if "last_intent" in chat_context and chat_context["last_intent"] == "price":
+                    return get_product_price(product["name"])
+
+
+
+                return f"You mentioned {product['name']}. Would you like to know its price, stock, sizes or colours?"
+
+
+    elif any(word in user_input for word in category_aliases):
+        for user_word, base_category in category_aliases.items():
+            if user_word in user_input:
+                found = search_products_by_keyword(base_category)
+                if found:
+                    chat_context["last_category"] = base_category
+                    chat_context["last_product"] = None
+                    chat_context["last_product_list"] = [p["name"] for p in found]
+
+                    display_name = pluralize(base_category)
+                    response = f"<b>Here are our {display_name}:</b><br>"
+
+                    for product in found:
+                        response += f"• {product['name']} (£{product['price']:.2f})<br>"
+                    chat_context["last_intent"] = None
+                    return response
+                else:
+                    plural_name = pluralize(base_category)
+                    return f"Sorry, we don't have any {plural_name} in stock right now."
+
+    elif (
+            "one" in user_input or
+            "that" in user_input or
+            any(adj in user_input for adj in [
+                "black", "plain", "blue", "red", "white", "green", "orange",
+                "purple", "pink", "brown", "gray", "mona", "monalisa"
+            ])
+    ):
+        if chat_context["last_product_list"]:
+            user_words = [w.lower() for w in user_input.split() if w.isalpha() or w.isalnum()] #split maeningful words
+            possible_matches = []
+
+            for product_name in chat_context["last_product_list"]:
+                product_clean = product_name.lower().replace(" ", "")
+
+                for word in user_words:
+                    if word in product_clean or word in product_name.lower():
+                        possible_matches.append(product_name)
+                        break #stop after match
+
+            if possible_matches:
+                chosen_product = possible_matches[0]
+                chat_context["last_product"] = chosen_product
+
+                #respond directly if word found
+                if any(k in user_input for k in ["price", "cost"]):
+                    return get_product_price(chosen_product)
+                if any(k in user_input for k in ["stock", "quantity", "available"]):
+                    return get_product_stock(chosen_product)
+                if any(k in user_input for k in ["size", "sizes"]):
+                    return get_product_sizes(chosen_product)
+                if any(k in user_input for k in ["color", "colour", "colors", "colours"]):
+                    return get_product_colors(chosen_product)
+
+                return f"Are you referring to the {chosen_product}? Would you like to know its price, stock, or colours?"
+
+        return "Could you tell me which product you’re referring to?"
+
+
+
+    else:
+        return "I'm sorry, I didn't quite understand that. 🤔 I can help with product details, store hours, or returns. What would you like to know?"
+
 
 
 @app.route("/")
@@ -184,13 +379,5 @@ if __name__ == "__main__":
     app.run(debug=True)
 
 print("DEBUG:", chat_context)
-
-
-'''while True:
-    user_input = input("You: ")
-    if user_input.lower() == "exit":
-        break
-    reply = chatbot_reply(user_input)
-    print("Bot:", reply)'''
 
 
