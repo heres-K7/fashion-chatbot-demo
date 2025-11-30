@@ -36,7 +36,7 @@
     "price": 49.99,
     "stock": 15,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["navy"],
+    "colors": ["black"],
     "description": "Lightweight, designed to block wind and light rain."
   },
 
@@ -73,7 +73,7 @@
     "price": 19.99,
     "stock": 100,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["white", "grey"],
+    "colors": ["white"],
     "description": "Modern streetwear-style T-shirt with bold front graphic print. Lightweight and comfortable, ideal for casual or urban looks."
   },
   {
@@ -83,7 +83,7 @@
     "price": 19.99,
     "stock": 100,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["blue-white", "red-white"],
+    "colors": ["blue-yellow"],
     "description": "Casual striped T-shirt available in blue-white or red-white patterns. Breathable fabric for a relaxed, everyday style."
   },
 
@@ -106,12 +106,12 @@
   },
   {
     "id": 10,
-    "name": "Grey Zip-Up Hoodie",
+    "name": "Zip-Up Hoodie",
     "category": "Hoodie",
     "price": 42.99,
     "stock": 90,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["grey", "charcoal"],
+    "colors": ["charcoal"],
     "description": "Comfortable zip-up hoodie available in grey and charcoal. Soft fabric with front pockets and adjustable hood."
   },
   {
@@ -121,7 +121,7 @@
     "price": 44.99,
     "stock": 19,
     "sizes": ["M", "L", "XL"],
-    "colors": ["navy", "sky blue"],
+    "colors": ["navy"],
     "description": "Stylish blue hoodie with front graphic print. Great for casual wear with a pop of color."
   },
   {
@@ -131,7 +131,7 @@
     "price": 46.99,
     "stock": 5,
     "sizes": ["L", "XL", "XXL"],
-    "colors": ["beige", "cream"],
+    "colors": ["beige"],
     "description": "Cozy oversized hoodie in beige and cream tones. Soft fleece interior for a relaxed and comfy fit."
   },
 
@@ -144,7 +144,7 @@
 
   {
     "id": 13,
-    "name": "Classic White Collared Shirt",
+    "name": "Classic Collared Shirt",
     "category": "Shirt",
     "price": 34.99,
     "stock": 8,
@@ -234,7 +234,7 @@
     "price": 69.99,
     "stock": 18,
     "sizes": ["40", "41", "42", "43", "44"],
-    "colors": ["black", "grey"],
+    "colors": ["black"],
     "description": "Breathable running shoes with cushioned soles for maximum comfort and performance."
   },
   {
@@ -244,7 +244,7 @@
     "price": 89.99,
     "stock": 20,
     "sizes": ["41", "42", "43", "44", "45"],
-    "colors": ["brown", "dark brown"],
+    "colors": ["dark brown"],
     "description": "Durable leather boots suitable for both casual and semi-formal occasions."
   },
   {
@@ -254,7 +254,7 @@
     "price": 49.99,
     "stock": 9,
     "sizes": ["39", "40", "41", "42", "43"],
-    "colors": ["navy", "black"],
+    "colors": ["black"],
     "description": "Comfortable and easy-to-wear canvas slip-ons, perfect for daily casual use."
   },
 

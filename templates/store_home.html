@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>UoB Fashion</title>
+    <link rel="stylesheet" href="/static/store.css">
+</head>
+
+<body>
+
+<nav class="navbar">
+    <a href="/store">Store</a>
+    <a href="/support">Customer Support</a>
+</nav>
+
+<a href="/chat" class="chat-bubble">
+    💬
+</a>
+
+<h1>Welcome to UoB Fashion</h1>
+
+<div class="category-grid">
+    {% for category in categories %}
+    <a href="/category/{{ category }}" class="category-card">
+        <img src="/static/category_icons/{{ category | lower }}.png" alt="{{ category }}">
+        <h2>{{ category | capitalize }}</h2>
+    </a>
+    {% endfor %}
+</div>
+
+</body>
+</html>

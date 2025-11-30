@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ category | capitalize }}</title>
+    <link rel="stylesheet" href="/static/store.css">
+</head>
+<body>
+
+<h1>{{ category | capitalize }}</h1>
+
+<div class="product-grid">
+
+    {% for product in products %}
+    <div class="product-card">
+
+        <img src="/static/{{ product_image(product.name) }}" alt="{{ product.name }}">
+        <h3>{{ product.name }}</h3>
+        <p>£{{ product.price }}</p>
+
+    </div>
+    {% endfor %}
+
+
+</div>
+
+</body>
+</html>

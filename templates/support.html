@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Customer Support</title>
+    <link rel="stylesheet" href="/static/store.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="/store">Store</a>
+    <a href="/support">Customer Support</a>
+    <a href="/chat">Chatbot</a>
+</nav>
+
+<div class="support-container">
+
+    <h1>Customer Support</h1>
+    <p>We're here to help! Choose an option below:</p>
+
+    <div class="support-options">
+
+        <a href="/chat" class="support-card">
+            💬 <br> Open Chatbot Assistant
+        </a>
+
+        <a href="mailto:kxa284@student.bham.ac.uk" class="support-card">
+            📧 <br> Email Support
+        </a>
+
+    </div>
+
+</div>
+
+<div class="faq-section">
+
+    <h2>Frequently Asked Questions</h2>
+
+    <input type="text" id="faq-search" placeholder="Search FAQs..." class="faq-search">
+
+    <div class="faq-item">
+        <button class="faq-question">How long does delivery take?</button>
+        <div class="faq-answer">
+            <p>Standard delivery takes 3–5 business days. Orders over £50 qualify for free delivery.</p>
+        </div>
+    </div>
+
+    <div class="faq-item">
+        <button class="faq-question">What is your return policy?</button>
+        <div class="faq-answer">
+            <p>You can return items within 14 days as long as they're unworn and in original packaging.</p>
+        </div>
+    </div>
+
+    <div class="faq-item">
+        <button class="faq-question">Do you ship internationally?</button>
+        <div class="faq-answer">
+            <p>We currently ship only within the UK.</p>
+        </div>
+    </div>
+
+    <div class="faq-item">
+        <button class="faq-question">How can I contact support?</button>
+        <div class="faq-answer">
+            <p>You can email us anytime or use the chatbot for instant assistance.</p>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const questions = document.querySelectorAll(".faq-question");
+        const searchInput = document.getElementById("faq-search");
+
+        questions.forEach(q => {
+            q.addEventListener("click", () => {
+                const answer = q.nextElementSibling;
+
+                document.querySelectorAll(".faq-answer").forEach(a => {
+                    if (a !== answer) {
+                        a.style.display = "none";
+                    }
+                });
+
+                answer.style.display = (answer.style.display === "block") ? "none" : "block";
+            });
+        });
+
+        searchInput.addEventListener("input", () => {
+            const searchText = searchInput.value.toLowerCase();
+
+            document.querySelectorAll(".faq-item").forEach(item => {
+                const question = item.querySelector(".faq-question").textContent.toLowerCase();
+                const answer = item.querySelector(".faq-answer").textContent.toLowerCase();
+
+                if (question.includes(searchText) || answer.includes(searchText)) {
+                    item.style.display = "block";
+                } else {
+                    item.style.display = "none";
+                }
+            });
+        });
+
+    });
+</script>
+
+
+
+</body>
+</html>

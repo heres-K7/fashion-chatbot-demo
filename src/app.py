@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect
 from symspellpy import SymSpell, Verbosity
 import os
 import json
@@ -364,15 +364,54 @@ def chatbot_reply(user_input):
         return "I'm sorry, I didn't quite understand that. 🤔 I can help with product details, store hours, or returns. What would you like to know?"
 
 
+def get_product_image_path(product_name):
+
+    base = product_name.lower().replace(" ", "-")
+
+    image_dir = os.path.join(app.static_folder, "product_images")
+
+    for ext in [".jpg", ".jpeg", ".png"]:
+        filename = base + ext
+        full_path = os.path.join(image_dir, filename)
+        if os.path.exists(full_path):
+
+            return f"product_images/{filename}"
+
+    return "product_images/placeholder.png"
+
+@app.context_processor
+def utility_processor():
+    return dict(product_image=get_product_image_path)
+
 
 @app.route("/")
-def index():
+def home():
+    return redirect("/store")
+
+@app.route("/chat")
+def chat_page():
     return render_template("index.html")
+
 @app.route("/get", methods=["POST"])
 def get_chatbot_response():
     user_input = request.form["message"]
     response = chatbot_reply(user_input)
     return jsonify({"response": response})
+
+@app.route("/store")
+def store_home():
+    categories = sorted(list(set([p["category"] for p in products])))
+    return render_template("store_home.html", categories=categories)
+
+@app.route("/category/<category>")
+def category_page(category):
+    selected = [p for p in products if p["category"].lower() == category.lower()]
+    return render_template("category_page.html", category=category, products=selected)
+
+@app.route("/support")
+def support_page():
+    return render_template("support.html")
+
 
 
 if __name__ == "__main__":
