@@ -17,6 +17,17 @@
 </div>
 
 <script>
+    function renderButtons(buttons) {
+        if (!buttons || buttons.length === 0) return "";
+
+        let html = `<div class="quick-buttons">`;
+        buttons.forEach(btn => {
+            html += `<button class="quick-btn" data-value="${btn.value}">${btn.label}</button>`;
+        });
+        html += `</div>`;
+        return html;
+    }
+
     function sendMessage() {
         let userInput = document.getElementById("user-input").value;
         if (userInput.trim() === "") return;
@@ -45,9 +56,15 @@
 
                 setTimeout(() => {
                     typingBubble.remove();
-                    let botBubble = `<div class="chat-bubble bot"><p>${data.response}</p></div>`;
+                    let botBubble = `
+                        <div class="chat-bubble bot">
+                        <p>${data.response}</p>
+                        ${renderButtons(data.buttons)}
+                        </div>
+                    `;
                     chatBox.innerHTML += botBubble;
                     chatBox.scrollTop = chatBox.scrollHeight;
+
                 }, 1000);
             });
     }
@@ -55,9 +72,13 @@
     //allow pressing Enter to send message
     document.addEventListener("keypress", function(e) {
         if (e.key === "Enter") {
-            sendMessage();
+            const input = document.getElementById("user-input");
+            if (input.value.trim() !== "") {
+                sendMessage();
+            }
         }
     });
+
 
     window.onload = function() {
         let chatBox = document.getElementById("chat-box");
@@ -66,6 +87,18 @@
             chatBox.innerHTML += greeting;
         }, 1000);
     };
+
+
+
+    document.addEventListener("click", function(e) {
+        if (e.target.classList.contains("quick-btn")) {
+            const value = e.target.getAttribute("data-value");
+            document.getElementById("user-input").value = value;
+            sendMessage();
+        }
+    });
+
+
 </script>
 
 </body>

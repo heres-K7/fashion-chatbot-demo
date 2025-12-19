@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, jsonify, redirect
 from symspellpy import SymSpell, Verbosity
 import os
 import json
+import re
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -151,6 +152,138 @@ def pluralize(word):
 
 
 
+def _all_known_colors(products_list):
+    colors = set()
+    for p in products_list:
+        for c in p.get("colors", []):
+            colors.add(c.lower())
+
+    colors.update({"grey", "gray", "navy", "off white", "off-white", "white", "black", "blue", "red", "green", "brown", "beige"})
+    return colors #get colours so when user request item with a specific colour bot list it
+
+KNOWN_COLORS = _all_known_colors(products) # storing place
+
+def parse_product_query(user_input: str): #take the information from sentence and return them to the return structure
+
+    text = user_input.lower()
+
+    category = None
+    for user_word, base_category in category_aliases.items():
+        if user_word in text:
+            category = base_category
+            break
+
+    #size
+    size = None
+    m = re.search(r"\b(xx?s|xs|s|m|l|xl|xxl)\b", text)
+    if m:
+        size = m.group(1).upper()
+
+    #price: under/below/less than + number, or over/above/more than + number
+    max_price = None
+    min_price = None
+
+    '''#capture values
+    def _extract_number(s):
+        s = s.replace("£", "").strip()
+        try:
+            return float(s)
+        except:
+            return None'''
+
+    #regex to return request with under or above
+    under = re.search(r"\b(under|below|less than)\b\s*(?:£\s*)?([0-9]+(?:\.[0-9]{1,2})?)", text)
+    if under:
+        max_price = float(under.group(2))
+
+    over = re.search(r"\b(over|above|more than)\b\s*(?:£\s*)?([0-9]+(?:\.[0-9]{1,2})?)", text)
+    if over:
+        min_price = float(over.group(2))
+
+
+    color = None
+    #handle "off white" and "off-white" as special case
+    if "off white" in text or "off-white" in text:
+        color = "off white"
+    else:
+        for c in KNOWN_COLORS:
+            if re.search(rf"\b{re.escape(c)}\b", text):
+                color = c
+                break
+
+    return {
+        "category": category,
+        "color": color.strip() if isinstance(color, str) else None,
+        "size": size,
+        "max_price": max_price,
+        "min_price": min_price
+    }
+
+def filter_products(filters: dict): #check matches
+    results = []
+
+    for p in products:
+        #category
+        if filters["category"]:
+            if filters["category"] not in p["category"].lower():
+                continue
+
+        #color
+        if filters["color"]:
+            product_colors = [c.lower() for c in p.get("colors", [])]
+            wanted = filters["color"].strip().replace("-", " ")
+
+            #products with no colour still shown
+            if product_colors:
+                if not any(wanted in pc.replace("-", " ") for pc in product_colors):
+                    continue
+
+
+        if filters["size"]:
+            sizes = [s.upper() for s in p.get("sizes", [])]
+            if filters["size"] not in sizes:
+                continue
+
+        price = float(p.get("price", 0))
+        if filters["max_price"] is not None and price > filters["max_price"]:
+            continue
+        if filters["min_price"] is not None and price < filters["min_price"]:
+            continue
+
+        results.append(p)
+
+    return results
+
+def format_product_list(items, title="Here’s what I found:"):
+    if not items:
+        return "Sorry, I couldn’t find anything matching that. Try a different colour/size/price or category."
+
+    msg = f"<b>{title}</b><br>"
+    for p in items:
+        msg += f"• {p['name']} (£{p['price']:.2f})<br>"
+    return msg
+
+
+
+
+def extract_possible_product_keyword(user_input: str):
+    text = user_input.lower()
+
+    noise = {
+        "show", "me", "all", "everything", "do", "you", "have", "got",
+        "any", "a", "an", "the", "in", "under", "below", "less", "than",
+        "over", "above", "more", "price", "cost", "size", "sizes",
+        "color", "colour", "colors", "colours", "stock", "available",
+        "availability", "please", "can", "could", "tell"
+    }
+
+    words = [w for w in re.findall(r"[a-zA-Z\-]+", text) if w not in noise]
+    return words[0] if words else None
+
+
+
+
+
 def chatbot_reply(user_input):
     user_input = user_input.lower()
 
@@ -162,6 +295,18 @@ def chatbot_reply(user_input):
     user_input = " ".join(corrected)
     print("Corrected input:", user_input)  # for debugging, to see the corrected input
 
+
+    if user_input.strip() == "/support":
+        return {
+            "response": (
+                "Here’s how you can get help 👇<br>"
+                "📧 Email: <a href='mailto:kxa284@student.bham.ac.uk'>kxa284@student.bham.ac.uk</a><br>"
+                "🧾 Or visit: <a href='/support' target='_blank'>Customer Support Page</a>"
+            )
+        }
+
+
+
     greetings = ["hi", "hello", "hey", "hya", "good morning", "good afternoon", "good evening"]
 
     for greet in greetings:
@@ -169,7 +314,56 @@ def chatbot_reply(user_input):
             chat_context["last_intent"] = None
             return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today?"
 
-    if "open" in user_input or "hour" in user_input or "time" in user_input:
+
+    raw_input = user_input.strip()
+
+    quick_actions = {
+        "/support": {"response": (
+            "Here’s how you can get help 👇<br>"
+            "📧 Email: <a href='mailto:kxa284@student.bham.ac.uk'>kxa284@student.bham.ac.uk</a><br>"
+            "🧾 Or visit: <a href='/support' target='_blank'>Customer Support Page</a>"
+        )},
+        "open support page": {"response": "Opening support page: <a href='/support' target='_blank'>Customer Support</a>"},
+        "email support": {"response": "Email us here: <a href='mailto:kxa284@student.bham.ac.uk'>kxa284@student.bham.ac.uk</a>"},
+    }
+
+    if raw_input in quick_actions:
+        return quick_actions[raw_input]
+
+
+
+
+
+    if user_input.strip() in ["help", "menu", "/help"]:
+        return {
+            "response": "Here are some quick options 👇",
+            "buttons": [
+                {"label": "T-Shirts", "value": "show me t-shirts"},
+                {"label": "Hoodies", "value": "show me hoodies"},
+                {"label": "Jackets", "value": "show me jackets"},
+                {"label": "Shoes", "value": "show me shoes"},
+                {"label": "Delivery", "value": "delivery"},
+                {"label": "Returns", "value": "return policy"},
+                {"label": "Customer Support", "value": "support"}
+            ]
+        }
+
+
+    #handling support, etc. messages
+    if any(word in user_input for word in ["support", "customer support", "helpdesk", "contact", "email", "complaint"]):
+        return {
+            "response": "Customer Support options 👇",
+            "buttons": [
+                {"label": "Open Support Page", "value": "open support page"},
+                {"label": "Email Support", "value": "email support"}
+            ]
+        }
+
+
+
+
+
+    if ("hour" in user_input or "hours" in user_input or "time" in user_input) or ("open" in user_input and "store" in user_input):
         return "🕒 Our store is open Monday to Saturday, from 9 AM to 8 PM."
 
     elif "location" in user_input or "where" in user_input:
@@ -192,6 +386,79 @@ def chatbot_reply(user_input):
     elif "how are you" in user_input:
         chat_context["last_intent"] = None
         return "I'm just a helpful bot 😄 How can I assist you today?"
+
+
+    filters = parse_product_query(user_input) #detect when to search based on user's asking
+    print("DEBUG filters:", filters)
+
+    product_keywords = [
+        "show", "find", "do you have", "have you got",
+        "looking for", "need", "want", "buy", "available"
+    ]
+
+    asked_for_products = (
+            any(k in user_input for k in product_keywords)
+            or filters["category"]
+            or filters["color"]
+            or filters["size"]
+            or filters["max_price"] is not None
+            or filters["min_price"] is not None
+    )
+
+
+
+
+    if asked_for_products:
+
+        all_phrases = ["show me all", "all products", "everything", "show everything", "show me everything"]
+        if any(p in user_input for p in all_phrases):
+            return "You’ll probably find it easier to browse everything in the Store page (with pictures 😅). Try /store or click Store in the navbar!"
+
+        matched = filter_products(filters)
+        print("DEBUG matched names:", [p["name"] for p in matched])
+
+        possible_kw = extract_possible_product_keyword(user_input)
+
+        no_filters = (
+            not filters["category"]
+            and not filters["color"]
+            and not filters["size"]
+            and filters["max_price"] is None
+            and filters["min_price"] is None
+        )
+
+        if no_filters and possible_kw and len(matched) == len(products):
+            kw_exists = any(
+                possible_kw in p["name"].lower()
+                or possible_kw in p["category"].lower()
+                for p in products
+            )
+            if not kw_exists:
+                return (
+                    f"Sorry, we don’t sell '{possible_kw}' here. "
+                    "I can help with clothes like t-shirts, hoodies, jackets, shoes, "
+                    "trousers, socks, and accessories.😊"
+                )
+
+
+
+
+
+        if filters["category"]:
+            chat_context["last_category"] = filters["category"]
+            chat_context["last_product"] = None
+            chat_context["last_product_list"] = [p["name"] for p in matched]
+
+        if filters["max_price"] is not None and not filters["category"]:
+            title = f"Products under £{filters['max_price']:.0f}:"
+        elif filters["category"]:
+            title = f"Here are our {filters['category']}s:"
+        else:
+            title = "Here’s what I found:"
+
+        return format_product_list(matched, title=title)
+
+
 
 
 
@@ -396,6 +663,10 @@ def chat_page():
 def get_chatbot_response():
     user_input = request.form["message"]
     response = chatbot_reply(user_input)
+
+    if isinstance(response, dict):
+        return jsonify(response)
+
     return jsonify({"response": response})
 
 @app.route("/store")
