@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, jsonify, redirect
 from symspellpy import SymSpell, Verbosity
+from textblob import TextBlob
 import os
 import json
 import re
+
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -73,6 +75,14 @@ category_aliases = {
     "pant": "pant",
     "pants": "pant"
 }
+
+
+FRUSTRATION_PHRASES = ["not working", "doesn't work", "doesnt work", "broken", "bug", "error", "useless"
+                       "waste of time", "annoying", "mad", "angry", "frustrating", "bad", "sad"
+                       "terrible", "stupid", "hate", "worst", "ridiculous"
+                       ]
+FRUSTRATION_EMOJIS = ["😡", "🤬", "😤", "😠", "😞", "💩", "🤦‍♂️"]
+NEGATIVE_PUNCTUATION = ["!!!", "!!", "??", "?!", "!?"]
 
 
 #memorise last mentioned text
@@ -191,7 +201,7 @@ def parse_product_query(user_input: str): #take the information from sentence an
         except:
             return None'''
 
-    #regex to return request with under or above
+    #regex to search and return request with under or above
     under = re.search(r"\b(under|below|less than)\b\s*(?:£\s*)?([0-9]+(?:\.[0-9]{1,2})?)", text)
     if under:
         max_price = float(under.group(2))
@@ -284,6 +294,28 @@ def extract_possible_product_keyword(user_input: str):
 
 
 
+def detect_frustration(text: str) -> bool:
+    t = text.lower().strip()
+
+    if any(p in t for p in FRUSTRATION_PHRASES):
+        return True
+    if any(p in text for p in NEGATIVE_PUNCTUATION):
+        return True
+    if any(e in text for e in FRUSTRATION_EMOJIS):
+        return True
+
+    blob = TextBlob(text)
+    polarity = blob.sentiment.polarity
+
+    if polarity < -0.4: #negetive feeling
+        return True
+
+    return False
+
+
+
+
+
 def chatbot_reply(user_input):
     user_input = user_input.lower()
 
@@ -313,6 +345,7 @@ def chatbot_reply(user_input):
         if user_input.strip() == greet or user_input.startswith(greet + " "):
             chat_context["last_intent"] = None
             return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today?"
+
 
 
     raw_input = user_input.strip()
@@ -361,6 +394,23 @@ def chatbot_reply(user_input):
 
 
 
+    if detect_frustration(user_input): #feeling detection
+        chat_context["last_intent"] = None
+        return {
+            "response": (
+                "Sorry about that 😅 I can see this is frustrating. "
+                "Let’s try one of these options:"
+            ),
+            "buttons": [
+                {"label": "Help Menu", "value": "help"},
+                {"label": "Delivery Info", "value": "delivery"},
+                {"label": "Return Policy", "value": "return policy"},
+                {"label": "Customer Support", "value": "support"}
+            ]
+        }
+
+
+
 
 
     if ("hour" in user_input or "hours" in user_input or "time" in user_input) or ("open" in user_input and "store" in user_input):
@@ -370,7 +420,7 @@ def chatbot_reply(user_input):
         return "📍 Our store is located at B15 2TT Fashion Street, Birmingham."
 
     elif "delivery" in user_input or "shipping" in user_input:
-        return "🚚 We offer free delivery on orders over £50, and standard shipping takes 3–5 business days."
+        return "🚚 We offer free delivery on orders over £50, £4.99 delivery fees apply if less. Standard shipping takes 3–5 business days."
 
     elif "return" in user_input or "refund" in user_input:
         return "↩️ You can return any item within 14 days of purchase, as long as it's unworn and in original packaging."
