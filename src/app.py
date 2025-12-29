@@ -4,6 +4,7 @@ from textblob import TextBlob
 import os
 import json
 import re
+import random
 
 
 
@@ -90,7 +91,17 @@ chat_context = {
     "last_category": None,
     "last_product": None,
     "last_intent": None,
-    "last_product_list": []
+    "last_product_list": [],
+    "mode": None, #outfit mode or not
+    "outfit_step": None, #occasion -> waether -> colour -> budget
+    "outfit_prefs": { #user's preferences
+        "occasion": None,
+        "weather": None,
+        "colors": [],
+        "budget": None,
+        "style": None
+    },
+    "last_outfit": None #memorise
 }
 
 
@@ -309,10 +320,171 @@ def detect_frustration(text: str) -> bool:
 
     if polarity < -0.4: #negetive feeling
         return True
+    print("DEBUG frustration check:", text, "polarity:", TextBlob(text).sentiment.polarity)
 
     return False
 
 
+
+
+
+def _cat(p):
+    return p["category"].lower() #get product by category type
+
+TOP_CATS = ["t-shirt", "t-shirts", "shirt", "hoodie", "jacket"]
+BOTTOM_CATS = ["trouser", "trousers", "jean", "jeans", "jogger", "joggers", "pant", "pants", "bottom", "bottoms"]
+SHOE_CATS = ["shoe", "shoes"]
+ACC_CATS = ["accessory", "accessories"]
+SOCK_CATS = ["sock", "socks"]
+
+
+def pick_one(items, prefs, avoid_names=None): #filter by rules
+    avoid_names = set(avoid_names or [])
+
+    items = [p for p in items if p.get("stock", 0) > 0] or items #prefer in stock items
+
+    if prefs.get("colors"):
+        wanted = {c.lower() for c in prefs["colors"]}
+        colored = [p for p in items if any(c.lower() in wanted for c in p.get("colors", []))]
+        if colored:
+            items = colored
+
+    if prefs.get("budget") is not None:
+        under = [p for p in items if float(p.get("price", 0)) <= prefs["budget"]]
+        if under:
+            items = under
+
+    non_repeat = [p for p in items if p["name"] not in avoid_names] #avoid repeat in the build of the outfit
+    if non_repeat:
+        items = non_repeat
+
+    if not items:
+        return None
+
+    items_sorted = sorted(items, key=lambda p: float(p.get("price", 0))) #pick randomly from top few cheapest (gives variety but stays sensible)
+    top_k = items_sorted[:min(4, len(items_sorted))]
+    return random.choice(top_k)
+
+
+def cat_key(cat: str) -> str:
+    """
+    making category to easy and clear key:
+    'T-Shirts' --> 'tshirts'
+    'Jackets'  --> 'jackets'
+    'Accessories' --> 'accessories'
+    """
+    return re.sub(r"[^a-z]", "", (cat or "").lower())
+
+def build_outfit(prefs):
+    occasion = prefs.get("occasion")
+    weather = prefs.get("weather")
+
+    def is_cat(p, *keys):
+        return cat_key(p.get("category", "")) in set(keys)
+
+    tops_all = [p for p in products if is_cat(p, "tshirt", "hoodie", "shirt", "jacket")] #go thro all product then group them
+    bottoms_all = [p for p in products if is_cat(p, "bottoms")]
+    shoes_all = [p for p in products if is_cat(p, "shoes")]
+    accs_all = [p for p in products if is_cat(p, "accessories")]
+
+    tops = tops_all[:]
+    bottoms = bottoms_all[:]
+    shoes = shoes_all[:]
+    accs = accs_all[:]
+
+
+    if occasion == "work":
+        work_tops = [p for p in tops if is_cat(p, "shirt", "jacket")]
+        if work_tops:
+            tops = work_tops
+
+        suit_like = [p for p in tops if "suit" in p["name"].lower()]
+        if suit_like:
+            tops = suit_like
+
+        formal_bottoms = [p for p in bottoms if any(w in p["name"].lower() for w in ["trouser", "formal", "slim", "chino"])]
+        if formal_bottoms:
+            bottoms = formal_bottoms
+
+        formal_shoes = [p for p in shoes if any(w in p["name"].lower() for w in ["leather", "boot", "oxford", "loafer", "formal"])]
+        if formal_shoes:
+            shoes = formal_shoes
+
+
+    if weather == "cold":
+        warm = [p for p in tops if is_cat(p, "hoodie", "jacket")]
+        if warm:
+            tops = warm
+    elif weather == "hot":
+        light = [p for p in tops if is_cat(p, "tshirt", "shirt")]
+        if light:
+            tops = light
+    elif weather == "rainy":
+        rain = [p for p in tops if is_cat(p, "jacket")]
+        if rain:
+            tops = rain
+
+    #avoid repeat
+    avoid = set()
+    last = chat_context.get("last_outfit")
+    if last:
+        for k in ["top", "bottom", "shoes", "accessory"]:
+            if last.get(k):
+                avoid.add(last[k]["name"])
+
+
+    top_pick = pick_one(tops, prefs, avoid)
+    bottom_pick = pick_one(bottoms, prefs, avoid)
+    shoes_pick = pick_one(shoes, prefs, avoid)
+
+    accessory_pick = None
+    if occasion in ["party", "work"]:
+        if occasion == "work":
+            tie_like = [p for p in accs if "tie" in p["name"].lower()]
+
+            if tie_like:
+                accessory_pick = pick_one(tie_like, prefs, avoid)
+            else:
+                accessory_pick = pick_one(accs, prefs, avoid)
+        else:
+            accessory_pick = pick_one(accs, prefs, avoid)
+
+    return {
+        "top": top_pick,
+        "bottom": bottom_pick,
+        "shoes": shoes_pick,
+        "accessory": accessory_pick
+    }
+
+
+
+def format_outfit(outfit, prefs):
+    if not outfit["top"] or not outfit["bottom"] or not outfit["shoes"]:
+        return "I couldn’t build a full outfit from the current stock 😅 Try a different occasion or budget."
+
+    parts = []
+    total = 0.0
+    for key in ["top", "bottom", "shoes", "accessory"]:
+        item = outfit.get(key)
+        if item:
+            total += float(item["price"])
+            parts.append(f"• <b>{key.capitalize()}</b>: {item['name']} (£{item['price']:.2f})")
+
+    why = []
+    if prefs.get("occasion"):
+        why.append(f"Occasion: <b>{prefs['occasion']}</b> — picked items that fit that vibe.")
+    if prefs.get("weather"):
+        why.append(f"Weather: <b>{prefs['weather']}</b> — chose pieces that suit the conditions.")
+    if prefs.get("colors"):
+        why.append(f"Colours: <b>{', '.join(prefs['colors'])}</b> — prioritised items in your colours.")
+    if prefs.get("budget") is not None:
+        why.append(f"Budget: <b>£{prefs['budget']:.0f}</b> — tried to stay within it where possible.")
+
+    response = "<b>Your Outfit:</b><br>" + "<br>".join(parts)
+    response += f"<br><br><b>Total:</b> £{total:.2f}"
+    response += "<br><br><b>Why this outfit?</b><br>" + "<br>".join("• " + x for x in why)
+    response += "<br><br>Want it more <b>minimal</b>, <b>bold</b>, or <b>trendy</b>?"
+    return response
 
 
 
@@ -365,8 +537,6 @@ def chatbot_reply(user_input):
 
 
 
-
-
     if user_input.strip() in ["help", "menu", "/help"]:
         return {
             "response": "Here are some quick options 👇",
@@ -394,7 +564,7 @@ def chatbot_reply(user_input):
 
 
 
-    if detect_frustration(user_input): #feeling detection
+    if chat_context.get("mode") != "outfit" and detect_frustration(user_input): #disable detect_frustration while building an outfit #feeling detection
         chat_context["last_intent"] = None
         return {
             "response": (
@@ -411,6 +581,94 @@ def chatbot_reply(user_input):
 
 
 
+    #after building and outfit, if user wants adjustments, rebuild with style preference
+    if chat_context.get("last_outfit") and any(s in user_input for s in ["minimal", "bold", "trendy"]):
+        prefs = chat_context.get("outfit_prefs", {})
+        if "minimal" in user_input: prefs["style"] = "minimal"
+        elif "bold" in user_input: prefs["style"] = "bold"
+        else: prefs["style"] = "trendy"
+
+        outfit = build_outfit(prefs)
+        chat_context["last_outfit"] = outfit
+        return format_outfit(outfit, prefs)
+
+
+
+    if any(x in user_input for x in ["outfit", "build an outfit", "outfit builder", "outfit idea", "pick an outfit", "make an outfit", "create an outfit"]):
+        chat_context["mode"] = "outfit"
+        chat_context["outfit_step"] = "occasion"
+        chat_context["outfit_prefs"] = {
+            "occasion": None,
+            "weather": None,
+            "colors": [],
+            "budget": None,
+            "style": None
+        }
+
+        chat_context["last_outfit"] = None
+
+        return "Sure 😄 What’s the occasion? (casual / work / party)"
+
+
+
+    if chat_context.get("mode") == "outfit":
+        step = chat_context.get("outfit_step")
+        prefs = chat_context.get("outfit_prefs", {})
+
+        if step == "occasion":
+            if any(o in user_input for o in ["casual", "work", "party"]):
+                if "work" in user_input: prefs["occasion"] = "work"
+                elif "party" in user_input: prefs["occasion"] = "party"
+                else: prefs["occasion"] = "casual"
+
+                chat_context["outfit_prefs"] = prefs
+                chat_context["outfit_step"] = "weather"
+                return "Nice. What’s the weather like? (cold / mild / hot / rainy)"
+            return "Pick one please: casual / work / party"
+
+
+
+        if step == "weather":
+            if any(w in user_input for w in ["cold", "mild", "hot", "rain", "rainy"]):
+                if "cold" in user_input: prefs["weather"] = "cold"
+                elif "hot" in user_input: prefs["weather"] = "hot"
+                elif "rain" in user_input: prefs["weather"] = "rainy"
+                else: prefs["weather"] = "mild"
+
+                chat_context["outfit_prefs"] = prefs
+                chat_context["outfit_step"] = "colors"
+                return "Any preferred colours? (e.g., black, navy, white) or say 'no'"
+            return "Choose: cold / mild / hot / rainy"
+
+
+        if step == "colors":
+            if "no" in user_input or "any" in user_input:
+                prefs["colors"] = []
+            else:
+                found = [c for c in KNOWN_COLORS if c in user_input]
+                prefs["colors"] = found[:3]
+
+            chat_context["outfit_prefs"] = prefs
+            chat_context["outfit_step"] = "budget"
+            return "What’s your budget in £? (e.g., 80) or say 'no'"
+
+        if step == "budget":
+            if "no" in user_input or "any" in user_input:
+                prefs["budget"] = None
+            else:
+                m = re.search(r"(\d+(\.\d+)?)", user_input)
+                prefs["budget"] = float(m.group(1)) if m else None
+            chat_context["outfit_prefs"] = prefs
+
+            print("DEBUG OUTFIT PREFS:", chat_context["outfit_prefs"])
+
+            outfit = build_outfit(prefs)
+            chat_context["last_outfit"] = outfit
+            chat_context["mode"] = None
+            chat_context["outfit_step"] = None
+
+
+            return format_outfit(outfit, prefs)
 
 
     if ("hour" in user_input or "hours" in user_input or "time" in user_input) or ("open" in user_input and "store" in user_input):
@@ -490,10 +748,6 @@ def chatbot_reply(user_input):
                     "trousers, socks, and accessories.😊"
                 )
 
-
-
-
-
         if filters["category"]:
             chat_context["last_category"] = filters["category"]
             chat_context["last_product"] = None
@@ -507,9 +761,6 @@ def chatbot_reply(user_input):
             title = "Here’s what I found:"
 
         return format_product_list(matched, title=title)
-
-
-
 
 
     elif ("color" in user_input or "colors" in user_input or
@@ -734,10 +985,7 @@ def support_page():
     return render_template("support.html")
 
 
-
 if __name__ == "__main__":
     app.run(debug=True)
 
 print("DEBUG:", chat_context)
-
-

@@ -39,6 +39,26 @@
     "colors": ["black"],
     "description": "Lightweight, designed to block wind and light rain."
   },
+  {
+    "id": 33,
+    "name": "Black Suit",
+    "category": "Jacket",
+    "price": 129.99,
+    "stock": 30,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["black"],
+    "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions."
+  },
+  {
+    "id": 34,
+    "name": "Burgundy Suit",
+    "category": "Jacket",
+    "price": 129.99,
+    "stock": 30,
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": ["burgundy"],
+    "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions."
+  },
 
 
 
@@ -299,6 +319,24 @@
     "stock": 10,
     "colors": ["beige", "black", "green"],
     "description": "Durable canvas backpack with multiple compartments for everyday use."
+  },
+  {
+    "id": 31,
+    "name": "Black Tie",
+    "category": "Accessories",
+    "price": 19.99,
+    "stock": 30,
+    "colors": ["black"],
+    "description": "Classic formal tie designed to be worn with suits and dress shirts."
+  },
+  {
+    "id": 32,
+    "name": "Burgundy Tie",
+    "category": "Accessories",
+    "price": 19.99,
+    "stock": 30,
+    "colors": ["burgundy"],
+    "description": "Classic formal tie designed to be worn with suits and dress shirts."
   },
 
 
