@@ -101,7 +101,8 @@ chat_context = {
         "budget": None,
         "style": None
     },
-    "last_outfit": None #memorise
+    "last_outfit": None, #memorise
+    "last_outfit_prefs": None
 }
 
 
@@ -456,19 +457,44 @@ def build_outfit(prefs):
         "accessory": accessory_pick
     }
 
+def outfit_item_html(label, product):
+    if not product:
+        return ""
+
+    img = product.get("image")
+    img_html = ""
+    if img:
+        img_html = f"<img class='outfit-img' src='/static/product_images/{img}' alt='{product['name']}'>"
+
+    return f"""
+    <div class="outfit-item">
+        {img_html}
+        <div class="outfit-text">
+            <b>{label}</b><br>
+            {product['name']}<br>
+            £{float(product['price']):.2f}
+        </div>
+    </div>
+    """
+
 
 
 def format_outfit(outfit, prefs):
     if not outfit["top"] or not outfit["bottom"] or not outfit["shoes"]:
         return "I couldn’t build a full outfit from the current stock 😅 Try a different occasion or budget."
 
-    parts = []
     total = 0.0
     for key in ["top", "bottom", "shoes", "accessory"]:
         item = outfit.get(key)
         if item:
             total += float(item["price"])
-            parts.append(f"• <b>{key.capitalize()}</b>: {item['name']} (£{item['price']:.2f})")
+
+    parts_html = ""
+    parts_html += outfit_item_html("Top", outfit.get("top"))
+    parts_html += outfit_item_html("Bottom", outfit.get("bottom"))
+    parts_html += outfit_item_html("Shoes", outfit.get("shoes"))
+    if outfit.get("accessory"):
+        parts_html += outfit_item_html("Accessory", outfit.get("accessory"))
 
     why = []
     if prefs.get("occasion"):
@@ -480,8 +506,9 @@ def format_outfit(outfit, prefs):
     if prefs.get("budget") is not None:
         why.append(f"Budget: <b>£{prefs['budget']:.0f}</b> — tried to stay within it where possible.")
 
-    response = "<b>Your Outfit:</b><br>" + "<br>".join(parts)
-    response += f"<br><br><b>Total:</b> £{total:.2f}"
+    response = "<b>Your Outfit:</b><br>"
+    response += f"<div class='outfit-preview'>{parts_html}</div>"
+    response += f"<br><b>Total:</b> £{total:.2f}"
     response += "<br><br><b>Why this outfit?</b><br>" + "<br>".join("• " + x for x in why)
     response += "<br><br>Want it more <b>minimal</b>, <b>bold</b>, or <b>trendy</b>?"
     return response
@@ -498,6 +525,25 @@ def chatbot_reply(user_input):
         corrected.append(suggestions[0].term if suggestions else word)
     user_input = " ".join(corrected)
     print("Corrected input:", user_input)  # for debugging, to see the corrected input
+
+
+    if user_input.strip() in ["try another outfit", "another outfit", "new outfit", "regen outfit"]:
+        prefs = chat_context.get("last_outfit_prefs")
+        if not prefs:
+            return "I don’t have your last outfit preferences yet 😅 Type: build me an outfit"
+
+        outfit = build_outfit(prefs)
+        chat_context["last_outfit"] = outfit
+
+        html = format_outfit(outfit, prefs)
+        return {
+            "response": html,
+            "buttons": [
+                {"label": "Try another outfit", "value": "try another outfit"},
+                {"label": "Start new outfit", "value": "build me an outfit"}
+            ]
+        }
+
 
 
     if user_input.strip() == "/support":
@@ -664,12 +710,19 @@ def chatbot_reply(user_input):
 
             outfit = build_outfit(prefs)
             chat_context["last_outfit"] = outfit
+            chat_context["last_outfit_prefs"] = prefs.copy()
             chat_context["mode"] = None
             chat_context["outfit_step"] = None
 
 
-            return format_outfit(outfit, prefs)
-
+            html = format_outfit(outfit, prefs)
+            return {
+                "response": html,
+                "buttons": [
+                    {"label": "Try another outfit", "value": "try another outfit"},
+                    {"label": "Start new outfit", "value": "build me an outfit"}
+                ]
+            }
 
     if ("hour" in user_input or "hours" in user_input or "time" in user_input) or ("open" in user_input and "store" in user_input):
         return "🕒 Our store is open Monday to Saturday, from 9 AM to 8 PM."

@@ -156,3 +156,48 @@ h2 {
 .quick-btn:hover {
     background: #ddd;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.outfit-preview {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.outfit-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+.outfit-img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid #ddd;
+}
+
+.outfit-text {
+    font-size: 14px;
+    line-height: 1.3;
+}

@@ -7,6 +7,12 @@
     "stock": 50,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["navy", "black", "grey"],
+    "images": {
+      "navy": "denim.png",
+      "black": "denim-jacket-black.png",
+      "grey": "denim-jacket-grey.png"
+    },
+    "image": "denim.png",
     "description": "Classic denim jacket, perfect for casual wear."
   },
   {
@@ -17,6 +23,11 @@
     "stock": 50,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["black", "brown"],
+    "images": {
+      "black": "leather.png",
+      "brown": "leather-brown.png"
+    },
+    "image": "leather.png",
     "description": "Classic black or brown leather jacket for a bold, stylish look."
   },
   {
@@ -27,6 +38,10 @@
     "stock": 100,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["navy"],
+    "images": {
+      "navy": "rain-jacket.png"
+    },
+    "image": "rain-jacket.png",
     "description": "Waterproof, perfect for wet weather."
   },
   {
@@ -37,6 +52,10 @@
     "stock": 15,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["black"],
+    "images": {
+      "black": "wind-breaker.png"
+    },
+    "image": "wind-breaker.png",
     "description": "Lightweight, designed to block wind and light rain."
   },
   {
@@ -47,6 +66,10 @@
     "stock": 30,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["black"],
+    "images": {
+      "black": "black-suit.png"
+    },
+    "image": "black-suit.png",
     "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions."
   },
   {
@@ -57,6 +80,10 @@
     "stock": 30,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["burgundy"],
+    "images": {
+      "burgundy": "burgundy-suit.png"
+    },
+    "image": "burgundy-suit.png",
     "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions."
   },
 
@@ -74,6 +101,12 @@
     "stock": 200,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["black ","navy", "off white"],
+    "images": {
+      "black": "Plain-T-Shirt.png",
+      "navy": "navy-Plain-T-Shirt.png",
+      "off white": "off-white-Plain-T-Shirt.png"
+    },
+    "image": "Plain-T-Shirt.png",
     "description": "Simple and comfortable plain T-shirt available in black, navy, and off-white. Perfect for everyday casual wear or layering under jackets and shirts."
   },
   {
@@ -84,6 +117,10 @@
     "stock": 77,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["black"],
+    "images": {
+      "black": "mona-lisa-t-shirt.png"
+    },
+    "image": "mona-lisa-t-shirt.png",
     "description": "Stylish black T-shirt featuring a centered Mona Lisa print. Made from soft cotton, perfect for art lovers and casual outfits."
   },
   {
@@ -94,6 +131,10 @@
     "stock": 100,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["white"],
+    "images": {
+      "white": "graphic-streetwear-t-shirt.png"
+    },
+    "image": "graphic-streetwear-t-shirt.png",
     "description": "Modern streetwear-style T-shirt with bold front graphic print. Lightweight and comfortable, ideal for casual or urban looks."
   },
   {
@@ -104,6 +145,10 @@
     "stock": 100,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["blue-yellow"],
+    "images": {
+      "blue-yellow": "striped-casual-t-shirt.png"
+    },
+    "image": "striped-casual-t-shirt.png",
     "description": "Casual striped T-shirt available in blue-white or red-white patterns. Breathable fabric for a relaxed, everyday style."
   },
 
@@ -122,6 +167,10 @@
     "stock": 7,
     "sizes": ["M", "L", "XL"],
     "colors": ["black"],
+    "images": {
+      "black": "black-hoodie.png"
+    },
+    "image": "black-hoodie.png",
     "description": "Warm and soft black hoodie with front pocket."
   },
   {
@@ -132,6 +181,10 @@
     "stock": 90,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["charcoal"],
+    "images": {
+      "charcoal": "zip-up-hoodie.png"
+    },
+    "image": "zip-up-hoodie.png",
     "description": "Comfortable zip-up hoodie available in grey and charcoal. Soft fabric with front pockets and adjustable hood."
   },
   {
@@ -142,6 +195,10 @@
     "stock": 19,
     "sizes": ["M", "L", "XL"],
     "colors": ["navy"],
+    "images": {
+      "navy": "blue-graphic-hoodie.png"
+    },
+    "image": "blue-graphic-hoodie.png",
     "description": "Stylish blue hoodie with front graphic print. Great for casual wear with a pop of color."
   },
   {
@@ -152,6 +209,10 @@
     "stock": 5,
     "sizes": ["L", "XL", "XXL"],
     "colors": ["beige"],
+    "images": {
+      "beige": "beige-oversized-hoodie.png"
+    },
+    "image": "beige-oversized-hoodie.png",
     "description": "Cozy oversized hoodie in beige and cream tones. Soft fleece interior for a relaxed and comfy fit."
   },
 
@@ -170,6 +231,11 @@
     "stock": 8,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["white", "light blue"],
+    "images": {
+      "white": "classic-collared-shirt.png",
+      "light blue": "light-blue-collared-shirt.png"
+    },
+    "image": "classic-collared-shirt.png",
     "description": "Formal button-up shirt with a crisp collar. Perfect for office wear or formal occasions."
   },
   {
@@ -180,6 +246,12 @@
     "stock": 10,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["olive", "navy", "beige"],
+    "images": {
+      "olive": "casual-no-collar-shirt.png",
+      "navy": "navy-casual-no-collar-shirt.png",
+      "beige": "beige-casual-no-collar-shirt.png"
+    },
+    "image": "casual-no-collar-shirt.png",
     "description": "Relaxed no-collar shirt made from soft fabric. Great for casual outings or summer days."
   },
 
@@ -197,7 +269,11 @@
     "price": 44.99,
     "stock": 8,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["black", "navy"],
+    "colors": ["black"],
+    "images": {
+      "black": "formal-black-trousers.png"
+    },
+    "image": "formal-black-trousers.png",
     "description": "Classic black and navy trousers designed for formal and office wear. Made from premium stretch fabric for comfort."
   },
   {
@@ -207,7 +283,11 @@
     "price": 34.99,
     "stock": 12,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["grey", "black"],
+    "colors": ["grey"],
+    "images": {
+      "grey": "grey-joggers.png"
+    },
+    "image": "grey-joggers.png",
     "description": "Soft cotton joggers perfect for lounging or light workouts. Features drawstring waist and side pockets."
   },
   {
@@ -218,6 +298,11 @@
     "stock": 10,
     "sizes": ["S", "M", "L", "XL"],
     "colors": ["blue", "dark blue"],
+    "images": {
+      "blue": "blue-slim-fit-jeans.png",
+      "dark blue": "dark-blue-slim-fit-jeans.png"
+    },
+    "image": "blue-slim-fit-jeans.png",
     "description": "Classic slim-fit jeans with a modern cut. Durable denim with a comfortable fit for everyday wear."
   },
   {
@@ -228,6 +313,11 @@
     "stock": 9,
     "sizes": ["M", "L", "XL"],
     "colors": ["olive", "black"],
+    "images": {
+      "black": "cargo-pants.png",
+      "olive": "olive-cargo-pants.png"
+    },
+    "image": "cargo-pants.png",
     "description": "Trendy cargo pants featuring multiple pockets. Ideal for casual and streetwear looks."
   },
 
@@ -245,6 +335,10 @@
     "stock": 10,
     "sizes": ["39", "40", "41", "42", "43", "44"],
     "colors": ["white"],
+    "images": {
+      "white": "white-sneakers.png"
+    },
+    "image": "white-sneakers.png",
     "description": "Classic white sneakers for everyday wear. Lightweight and comfortable with durable rubber soles."
   },
   {
@@ -255,6 +349,10 @@
     "stock": 18,
     "sizes": ["40", "41", "42", "43", "44"],
     "colors": ["black"],
+    "images": {
+      "black": "black-running-shoes.png"
+    },
+    "image": "black-running-shoes.png",
     "description": "Breathable running shoes with cushioned soles for maximum comfort and performance."
   },
   {
@@ -264,7 +362,11 @@
     "price": 89.99,
     "stock": 20,
     "sizes": ["41", "42", "43", "44", "45"],
-    "colors": ["dark brown"],
+    "colors": ["brown"],
+    "images": {
+      "brown": "brown-leather-boots.png"
+    },
+    "image": "brown-leather-boots.png",
     "description": "Durable leather boots suitable for both casual and semi-formal occasions."
   },
   {
@@ -275,6 +377,10 @@
     "stock": 9,
     "sizes": ["39", "40", "41", "42", "43"],
     "colors": ["black"],
+    "images": {
+      "black": "slip-on-canvas-shoes.png"
+    },
+    "image": "slip-on-canvas-shoes.png",
     "description": "Comfortable and easy-to-wear canvas slip-ons, perfect for daily casual use."
   },
 
@@ -290,7 +396,11 @@
     "category": "Accessories",
     "price": 24.99,
     "stock": 15,
-    "colors": ["black", "brown"],
+    "colors": ["black"],
+    "images": {
+      "black": "black-leather-belt.png"
+    },
+    "image": "black-leather-belt.png",
     "description": "Classic leather belt with silver buckle. Pairs well with jeans and trousers."
   },
   {
@@ -300,6 +410,12 @@
     "price": 19.99,
     "stock": 20,
     "colors": ["navy", "black", "white"],
+    "images": {
+      "navy": "baseball-cap.png",
+      "black": "black-baseball-cap.png",
+      "white": "white-baseball.cap.png"
+    },
+    "image": "baseball-cap.png",
     "description": "Adjustable cotton baseball cap available in multiple colors."
   },
   {
@@ -309,6 +425,10 @@
     "price": 79.99,
     "stock": 7,
     "colors": ["silver"],
+    "images": {
+      "silver": "silver-wristwatch.png"
+    },
+    "image": "silver-wristwatch.png",
     "description": "Stylish stainless steel wristwatch with a minimalist design."
   },
   {
@@ -318,6 +438,12 @@
     "price": 39.99,
     "stock": 10,
     "colors": ["beige", "black", "green"],
+    "images": {
+      "beige": "canvas-backpack.png",
+      "black": "black-canvas-backpack.png",
+      "green": "green-canvas-backpack.png"
+    },
+    "image": "canvas-backpack.png",
     "description": "Durable canvas backpack with multiple compartments for everyday use."
   },
   {
@@ -327,6 +453,10 @@
     "price": 19.99,
     "stock": 30,
     "colors": ["black"],
+    "images": {
+      "black": "black-tie.png"
+    },
+    "image": "black-tie.png",
     "description": "Classic formal tie designed to be worn with suits and dress shirts."
   },
   {
@@ -336,6 +466,10 @@
     "price": 19.99,
     "stock": 30,
     "colors": ["burgundy"],
+    "images": {
+      "burgundy": "burgundy-tie.png"
+    },
+    "image": "burgundy-tie.png",
     "description": "Classic formal tie designed to be worn with suits and dress shirts."
   },
 
@@ -352,7 +486,12 @@
     "category": "Socks",
     "price": 12.99,
     "stock": 25,
-    "colors": ["white", "black", "grey"],
+    "colors": ["white", "black"],
+    "images": {
+      "black": "ankle-socks-pack-(3-pairs).png",
+      "white": "white-ankle-socks.png"
+    },
+    "image": "ankle-socks-pack-(3-pairs).png",
     "description": "Soft cotton ankle socks in a pack of 3. Ideal for sports or daily wear."
   },
   {
@@ -361,7 +500,11 @@
     "category": "Socks",
     "price": 14.99,
     "stock": 18,
-    "colors": ["multi-color"],
+    "colors": ["black"],
+    "images": {
+      "black": "patterned-crew-socks.png"
+    },
+    "image": "patterned-crew-socks.png",
     "description": "Fun patterned crew socks made from breathable fabric for all-day comfort."
   },
   {
@@ -370,7 +513,11 @@
     "category": "Socks",
     "price": 16.99,
     "stock": 12,
-    "colors": ["black","grey", "brown"],
+    "colors": ["black"],
+    "images": {
+      "black": "wool-winter-socks.png"
+    },
+    "image": "wool-winter-socks.png",
     "description": "Thick wool socks designed to keep your feet warm in cold weather."
   },
   {
@@ -379,7 +526,11 @@
     "category": "Socks",
     "price": 11.99,
     "stock": 20,
-    "colors": ["black", "white"],
+    "colors": ["black"],
+    "images": {
+      "black": "no-show-socks-(pack-of-3).png"
+    },
+    "image": "no-show-socks-(pack-of-3).png",
     "description": "Comfortable no-show socks perfect for sneakers and casual shoes."
   }
 
