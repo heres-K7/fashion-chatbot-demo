@@ -80,7 +80,7 @@ category_aliases = {
 
 FRUSTRATION_PHRASES = ["not working", "doesn't work", "doesnt work", "broken", "bug", "error", "useless"
                        "waste of time", "annoying", "mad", "angry", "frustrating", "bad", "sad"
-                       "terrible", "stupid", "hate", "worst", "ridiculous"
+                       "terrible", "stupid", "hate", "worst", "ridiculous", "Pissed off", "pissed"
                        ]
 FRUSTRATION_EMOJIS = ["😡", "🤬", "😤", "😠", "😞", "💩", "🤦‍♂️"]
 NEGATIVE_PUNCTUATION = ["!!!", "!!", "??", "?!", "!?"]
@@ -461,20 +461,26 @@ def outfit_item_html(label, product):
     if not product:
         return ""
 
-    img = product.get("image")
     img_html = ""
-    if img:
-        img_html = f"<img class='outfit-img' src='/static/product_images/{img}' alt='{product['name']}'>"
+    if product.get("image"):
+        img_html = f"<img class='outfit-img' src='/static/product_images/{product['image']}' alt='{product['name']}'>"
+
+    dots = ""
+    if product.get("colors"):
+        dots = "<div class='color-dots'>" + "".join(
+            f"<span class='color-dot {c}'></span>" for c in product["colors"]
+        ) + "</div>"
 
     return f"""
-    <div class="outfit-item">
+    <a class="outfit-item" href="/product/{product['id']}">
         {img_html}
         <div class="outfit-text">
             <b>{label}</b><br>
             {product['name']}<br>
             £{float(product['price']):.2f}
+            {dots}
         </div>
-    </div>
+    </a>
     """
 
 
@@ -1032,6 +1038,13 @@ def store_home():
 def category_page(category):
     selected = [p for p in products if p["category"].lower() == category.lower()]
     return render_template("category_page.html", category=category, products=selected)
+
+@app.route("/product/<int:product_id>")
+def product_page(product_id):
+    product = next((p for p in products if p["id"] == product_id), None)
+    if not product:
+        return "Product not found", 404
+    return render_template("product_page.html", product=product)
 
 @app.route("/support")
 def support_page():

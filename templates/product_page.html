@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ product.name }}</title>
+    <link rel="stylesheet" href="/static/store.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <a href="/store">Store</a>
+    <a href="/support">Customer Support</a>
+</nav>
+
+<div class="product-page">
+    <div class="product-image-wrapper">
+        <img src="/static/product_images/{{ product.image }}" class="product-img">
+    </div>
+
+    <div class="product-info">
+        <h1>{{ product.name }}</h1>
+        <p class="price">£{{ "%.2f"|format(product.price) }}</p>
+        <p>{{ product.description }}</p>
+
+        {% if product.colors %}
+        <div class="color-dots">
+            {% for c in product.colors %}
+            <span class="color-dot {{ c }}"></span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+
+</body>
+</html>
