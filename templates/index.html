@@ -83,7 +83,7 @@
     window.onload = function() {
         let chatBox = document.getElementById("chat-box");
         setTimeout(() => {
-            let greeting = `<div class="chat-bubble bot"><p>Hi 👋 I'm your Customer Support Chatbot. How can I help you today?</p></div>`;
+            let greeting = `<div class="chat-bubble bot"><p>Hi 👋 I'm your Customer Support Chatbot. How can I help you today? you can ask me to build an outfit, FAQs or whatever you want me to show you.😊</p></div>`;
             chatBox.innerHTML += greeting;
         }, 1000);
     };
@@ -97,6 +97,19 @@
             sendMessage();
         }
     });
+
+
+
+    const AUTO_OPEN_MENU = {{ 'true' if auto_open_menu else 'false' }};
+    const ACTIVE_PRODUCT_NAME = "{{ active_product_name if active_product_name else '' }}";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (AUTO_OPEN_MENU) {
+            document.getElementById("user-input").value = "menu";
+            sendMessage();
+        }
+    });
+
 
 
 </script>

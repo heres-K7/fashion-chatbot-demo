@@ -11,14 +11,21 @@
 <div class="product-grid">
 
     {% for product in products %}
-    <div class="product-card">
-
-        <img src="/static/{{ product_image(product.name) }}" alt="{{ product.name }}">
+    <a class="product-card" href="/product/{{ product.id }}">
+        <img src="/static/product_images/{{ product.image }}" alt="{{ product.name }}">
         <h3>{{ product.name }}</h3>
-        <p>£{{ product.price }}</p>
+        <p>£{{ "%.2f"|format(product.price) }}</p>
 
-    </div>
+        {% if product.colors %}
+        <div class="color-dots">
+            {% for c in product.colors %}
+            <span class="color-dot {{ c }}"></span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </a>
     {% endfor %}
+
 
 
 </div>

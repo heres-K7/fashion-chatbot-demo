@@ -13,7 +13,11 @@
       "grey": "denim-jacket-grey.png"
     },
     "image": "denim.png",
-    "description": "Classic denim jacket, perfect for casual wear."
+    "description": "Classic denim jacket, perfect for casual wear.",
+    "fit": "Regular",
+    "material": "Denim (cotton blend)",
+    "care": "Machine wash cold (30°C). Turn inside out. Do not tumble dry. Iron on low.",
+    "style_tips": ["Wear over a plain t-shirt with jeans and sneakers.", "Layer with a hoodie for a casual look."]
   },
   {
     "id": 2,
@@ -28,7 +32,12 @@
       "brown": "leather-brown.png"
     },
     "image": "leather.png",
-    "description": "Classic black or brown leather jacket for a bold, stylish look."
+    "description": "Classic black or brown leather jacket for a bold, stylish look.",
+    "fit": "Regular",
+    "material": "Faux leather outer with polyester lining",
+    "care": "Wipe clean with a damp cloth. Do not machine wash. Do not tumble dry.",
+    "style_tips": ["Pair with jeans and boots for a biker look.", "Wear over a plain tee for an easy outfit."]
+
   },
   {
     "id": 3,
@@ -42,7 +51,11 @@
       "navy": "rain-jacket.png"
     },
     "image": "rain-jacket.png",
-    "description": "Waterproof, perfect for wet weather."
+    "description": "Waterproof, perfect for wet weather.",
+    "fit": "Regular",
+    "material": "Water-resistant synthetic fabric",
+    "care": "Machine wash cold (30°C). Do not use fabric softener. Air dry.",
+    "style_tips": ["Wear with jeans and trainers for everyday rainy weather.", "Layer over a hoodie in colder rain."]
   },
   {
     "id": 4,
@@ -56,7 +69,11 @@
       "black": "wind-breaker.png"
     },
     "image": "wind-breaker.png",
-    "description": "Lightweight, designed to block wind and light rain."
+    "description": "Lightweight, designed to block wind and light rain.",
+    "fit": "Regular",
+    "material": "Lightweight polyester blend",
+    "care": "Machine wash cold (30°C). Air dry. Do not iron directly on the fabric.",
+    "style_tips": ["Perfect with joggers and sneakers for a sporty look.", "Layer over a t-shirt for mild weather."]
   },
   {
     "id": 33,
@@ -70,7 +87,11 @@
       "black": "black-suit.png"
     },
     "image": "black-suit.png",
-    "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions."
+    "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions.",
+    "fit": "Slim",
+    "material": "Suit fabric (poly-viscose blend)",
+    "care": "Dry clean only. Store on a hanger to keep shape.",
+    "style_tips": ["Wear with a collared shirt and tie for work.", "Add leather boots or smart shoes for a formal look."]
   },
   {
     "id": 34,
@@ -84,7 +105,11 @@
       "burgundy": "burgundy-suit.png"
     },
     "image": "burgundy-suit.png",
-    "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions."
+    "description": "Smart two-piece suit with a modern fit, suitable for formal and business occasions.",
+    "fit": "Slim",
+    "material": "Suit fabric (poly-viscose blend)",
+    "care": "Dry clean only. Store on a hanger to keep shape.",
+    "style_tips": ["Wear with a collared shirt and tie for formal events.", "Keep accessories simple to let the colour stand out."]
   },
 
 
@@ -100,14 +125,18 @@
     "price": 19.99,
     "stock": 200,
     "sizes": ["S", "M", "L", "XL"],
-    "colors": ["black ","navy", "off white"],
+    "colors": ["black","navy", "off white"],
     "images": {
       "black": "Plain-T-Shirt.png",
       "navy": "navy-Plain-T-Shirt.png",
       "off white": "off-white-Plain-T-Shirt.png"
     },
     "image": "Plain-T-Shirt.png",
-    "description": "Simple and comfortable plain T-shirt available in black, navy, and off-white. Perfect for everyday casual wear or layering under jackets and shirts."
+    "description": "Simple and comfortable plain T-shirt available in black, navy, and off-white. Perfect for everyday casual wear or layering under jackets and shirts.",
+    "fit": "Regular",
+    "material": "100% cotton",
+    "care": "Machine wash cold (30°C). Wash with similar colours. Do not tumble dry to reduce shrink risk.",
+    "style_tips": ["Wear under a denim jacket for layering.", "Pair with jeans or cargo pants for a casual outfit."]
   },
   {
     "id": 6,
@@ -121,7 +150,11 @@
       "black": "mona-lisa-t-shirt.png"
     },
     "image": "mona-lisa-t-shirt.png",
-    "description": "Stylish black T-shirt featuring a centered Mona Lisa print. Made from soft cotton, perfect for art lovers and casual outfits."
+    "description": "Stylish black T-shirt featuring a centered Mona Lisa print. Made from soft cotton, perfect for art lovers and casual outfits.",
+    "fit": "Regular",
+    "material": "100% cotton",
+    "care": "Machine wash cold (30°C). Turn inside out to protect the print. Air dry if possible.",
+    "style_tips": ["Pair with jeans for a clean look.", "Add a jacket for a smart casual outfit."]
   },
   {
     "id": 7,
@@ -135,7 +168,11 @@
       "white": "graphic-streetwear-t-shirt.png"
     },
     "image": "graphic-streetwear-t-shirt.png",
-    "description": "Modern streetwear-style T-shirt with bold front graphic print. Lightweight and comfortable, ideal for casual or urban looks."
+    "description": "Modern streetwear-style T-shirt with bold front graphic print. Lightweight and comfortable, ideal for casual or urban looks.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Turn inside out. Do not tumble dry.",
+    "style_tips": ["Wear with jeans and sneakers for casual style.", "Add a cap or backpack for a casual vibe."]
   },
   {
     "id": 8,
@@ -149,7 +186,11 @@
       "blue-yellow": "striped-casual-t-shirt.png"
     },
     "image": "striped-casual-t-shirt.png",
-    "description": "Casual striped T-shirt available in blue-white or red-white patterns. Breathable fabric for a relaxed, everyday style."
+    "description": "Casual striped T-shirt available in blue-white or red-white patterns. Breathable fabric for a relaxed, everyday style.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Wash with similar colours. Air dry.",
+    "style_tips": ["Match with plain bottoms to balance the stripes.", "Wear with white sneakers for a simple outfit."]
   },
 
 
@@ -171,7 +212,11 @@
       "black": "black-hoodie.png"
     },
     "image": "black-hoodie.png",
-    "description": "Warm and soft black hoodie with front pocket."
+    "description": "Warm and soft black hoodie with front pocket.",
+    "fit": "Regular",
+    "material": "Cotton/polyester blend with fleece interior",
+    "care": "Machine wash cold (30°C). Turn inside out. Air dry or tumble dry low.",
+    "style_tips": ["Wear with joggers for comfort.", "Layer under a denim jacket for cold weather."]
   },
   {
     "id": 10,
@@ -185,7 +230,11 @@
       "charcoal": "zip-up-hoodie.png"
     },
     "image": "zip-up-hoodie.png",
-    "description": "Comfortable zip-up hoodie available in grey and charcoal. Soft fabric with front pockets and adjustable hood."
+    "description": "Comfortable zip-up hoodie available in grey and charcoal. Soft fabric with front pockets and adjustable hood.",
+    "fit": "Regular",
+    "material": "Cotton/polyester blend",
+    "care": "Machine wash cold (30°C). Zip up before washing. Air dry for best shape.",
+    "style_tips": ["Great with jeans or joggers.", "Wear open with a plain t-shirt underneath."]
   },
   {
     "id": 11,
@@ -199,7 +248,11 @@
       "navy": "blue-graphic-hoodie.png"
     },
     "image": "blue-graphic-hoodie.png",
-    "description": "Stylish blue hoodie with front graphic print. Great for casual wear with a pop of color."
+    "description": "Stylish blue hoodie with front graphic print. Great for casual wear with a pop of color.",
+    "fit": "Regular",
+    "material": "Cotton/polyester blend",
+    "care": "Machine wash cold (30°C). Turn inside out to protect print. Air dry.",
+    "style_tips": ["Pair with black jeans for contrast.", "Add sneakers for an everyday outfit."]
   },
   {
     "id": 12,
@@ -213,7 +266,11 @@
       "beige": "beige-oversized-hoodie.png"
     },
     "image": "beige-oversized-hoodie.png",
-    "description": "Cozy oversized hoodie in beige and cream tones. Soft fleece interior for a relaxed and comfy fit."
+    "description": "Cozy oversized hoodie in beige and cream tones. Soft fleece interior for a relaxed and comfy fit.",
+    "fit": "Oversized",
+    "material": "Fleece cotton blend",
+    "care": "Machine wash cold (30°C). Air dry. Avoid high heat to keep the oversized shape.",
+    "style_tips": ["Wear with slim jeans to balance the oversized fit.", "Pair with sneakers for a relaxed look."]
   },
 
 
@@ -236,7 +293,11 @@
       "light blue": "light-blue-collared-shirt.png"
     },
     "image": "classic-collared-shirt.png",
-    "description": "Formal button-up shirt with a crisp collar. Perfect for office wear or formal occasions."
+    "description": "Formal button-up shirt with a crisp collar. Perfect for office wear or formal occasions.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Iron on medium. Hang dry to reduce wrinkles.",
+    "style_tips": ["Wear with trousers and a tie for work.", "Add a suit jacket for formal occasions."]
   },
   {
     "id": 14,
@@ -252,7 +313,11 @@
       "beige": "beige-casual-no-collar-shirt.png"
     },
     "image": "casual-no-collar-shirt.png",
-    "description": "Relaxed no-collar shirt made from soft fabric. Great for casual outings or summer days."
+    "description": "Relaxed no-collar shirt made from soft fabric. Great for casual outings or summer days.",
+    "fit": "Regular",
+    "material": "Lightweight cotton blend",
+    "care": "Machine wash cold (30°C). Air dry. Iron on low if needed.",
+    "style_tips": ["Pair with jeans for a casual look.", "Wear open over a plain t-shirt for layering."]
   },
 
 
@@ -274,7 +339,11 @@
       "black": "formal-black-trousers.png"
     },
     "image": "formal-black-trousers.png",
-    "description": "Classic black and navy trousers designed for formal and office wear. Made from premium stretch fabric for comfort."
+    "description": "Classic black and navy trousers designed for formal and office wear. Made from premium stretch fabric for comfort.",
+    "fit": "Regular",
+    "material": "Stretch fabric blend",
+    "care": "Machine wash cold (30°C). Do not tumble dry. Iron on low if needed.",
+    "style_tips": ["Pair with a collared shirt for work.", "Wear with suit jacket for formal outfits."]
   },
   {
     "id": 16,
@@ -288,7 +357,11 @@
       "grey": "grey-joggers.png"
     },
     "image": "grey-joggers.png",
-    "description": "Soft cotton joggers perfect for lounging or light workouts. Features drawstring waist and side pockets."
+    "description": "Soft cotton joggers perfect for lounging or light workouts. Features drawstring waist and side pockets.",
+    "fit": "Relaxed",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Air dry. Tumble dry low if needed.",
+    "style_tips": ["Wear with hoodies or t-shirts for comfort.", "Match with sneakers for a sporty look."]
   },
   {
     "id": 17,
@@ -303,7 +376,11 @@
       "dark blue": "dark-blue-slim-fit-jeans.png"
     },
     "image": "blue-slim-fit-jeans.png",
-    "description": "Classic slim-fit jeans with a modern cut. Durable denim with a comfortable fit for everyday wear."
+    "description": "Classic slim-fit jeans with a modern cut. Durable denim with a comfortable fit for everyday wear.",
+    "fit": "Slim",
+    "material": "Denim (cotton blend)",
+    "care": "Machine wash cold (30°C). Turn inside out. Air dry to keep colour.",
+    "style_tips": ["Wear with a plain t-shirt for a simple outfit.", "Pair with boots for a smart casual style."]
   },
   {
     "id": 18,
@@ -318,7 +395,11 @@
       "olive": "olive-cargo-pants.png"
     },
     "image": "cargo-pants.png",
-    "description": "Trendy cargo pants featuring multiple pockets. Ideal for casual and streetwear looks."
+    "description": "Trendy cargo pants featuring multiple pockets. Ideal for casual and casual looks.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Air dry. Do not iron on prints/labels.",
+    "style_tips": ["Match with a hoodie for a casual look.", "Pair with sneakers for casual wear."]
   },
 
 
@@ -339,7 +420,11 @@
       "white": "white-sneakers.png"
     },
     "image": "white-sneakers.png",
-    "description": "Classic white sneakers for everyday wear. Lightweight and comfortable with durable rubber soles."
+    "description": "Classic white sneakers for everyday wear. Lightweight and comfortable with durable rubber soles.",
+    "fit": "True to size",
+    "material": "Synthetic upper with rubber sole",
+    "care": "Wipe clean with a damp cloth. Air dry. Avoid machine washing.",
+    "style_tips": ["Works with almost anything — jeans, joggers, cargos.", "Great with plain outfits for a clean look."]
   },
   {
     "id": 20,
@@ -353,7 +438,11 @@
       "black": "black-running-shoes.png"
     },
     "image": "black-running-shoes.png",
-    "description": "Breathable running shoes with cushioned soles for maximum comfort and performance."
+    "description": "Breathable running shoes with cushioned soles for maximum comfort and performance.",
+    "fit": "True to size",
+    "material": "Breathable synthetic mesh with rubber sole",
+    "care": "Wipe clean. Air dry. Remove insoles to dry faster if wet.",
+    "style_tips": ["Best with joggers or sporty outfits.", "Good for casual everyday wear."]
   },
   {
     "id": 21,
@@ -367,7 +456,11 @@
       "brown": "brown-leather-boots.png"
     },
     "image": "brown-leather-boots.png",
-    "description": "Durable leather boots suitable for both casual and semi-formal occasions."
+    "description": "Durable leather boots suitable for both casual and semi-formal occasions.",
+    "fit": "True to size",
+    "material": "Leather upper with durable sole",
+    "care": "Wipe clean. Use leather conditioner occasionally. Air dry away from heat.",
+    "style_tips": ["Great with jeans and a jacket.", "Good with formal trousers for smart casual."]
   },
   {
     "id": 22,
@@ -381,7 +474,11 @@
       "black": "slip-on-canvas-shoes.png"
     },
     "image": "slip-on-canvas-shoes.png",
-    "description": "Comfortable and easy-to-wear canvas slip-ons, perfect for daily casual use."
+    "description": "Comfortable and easy-to-wear canvas slip-ons, perfect for daily casual use.",
+    "fit": "True to size",
+    "material": "Canvas upper with rubber sole",
+    "care": "Wipe clean. Air dry. Avoid machine washing to protect shape.",
+    "style_tips": ["Easy match with jeans or cargo pants.", "Good for everyday casual outfits."]
   },
 
 
@@ -401,7 +498,11 @@
       "black": "black-leather-belt.png"
     },
     "image": "black-leather-belt.png",
-    "description": "Classic leather belt with silver buckle. Pairs well with jeans and trousers."
+    "description": "Classic leather belt with silver buckle. Pairs well with jeans and trousers.",
+    "fit": "Adjustable",
+    "material": "Leather",
+    "care": "Wipe clean with a dry cloth. Avoid soaking or machine washing.",
+    "style_tips": ["Perfect with jeans or formal trousers.", "Pairs well with suits for work."]
   },
   {
     "id": 24,
@@ -416,7 +517,11 @@
       "white": "white-baseball.cap.png"
     },
     "image": "baseball-cap.png",
-    "description": "Adjustable cotton baseball cap available in multiple colors."
+    "description": "Adjustable cotton baseball cap available in multiple colors.",
+    "fit": "Adjustable",
+    "material": "Cotton",
+    "care": "Spot clean recommended. Air dry.",
+    "style_tips": ["Great for casual outfits with t-shirts and hoodies.", "Works well with sneakers and jeans."]
   },
   {
     "id": 25,
@@ -429,7 +534,11 @@
       "silver": "silver-wristwatch.png"
     },
     "image": "silver-wristwatch.png",
-    "description": "Stylish stainless steel wristwatch with a minimalist design."
+    "description": "Stylish stainless steel wristwatch with a minimalist design.",
+    "fit": "One size",
+    "material": "Stainless steel",
+    "care": "Wipe clean with a soft cloth. Avoid water exposure if possible.",
+    "style_tips": ["Adds a touch to formal outfits.", "Works well with suits and shirts."]
   },
   {
     "id": 26,
@@ -444,7 +553,11 @@
       "green": "green-canvas-backpack.png"
     },
     "image": "canvas-backpack.png",
-    "description": "Durable canvas backpack with multiple compartments for everyday use."
+    "description": "Durable canvas backpack with multiple compartments for everyday use.",
+    "fit": "One size",
+    "material": "Canvas",
+    "care": "Spot clean with mild soap. Air dry.",
+    "style_tips": ["Good for daily casual outfits.", "Pairs well with hoodies and sneakers."]
   },
   {
     "id": 31,
@@ -457,7 +570,11 @@
       "black": "black-tie.png"
     },
     "image": "black-tie.png",
-    "description": "Classic formal tie designed to be worn with suits and dress shirts."
+    "description": "Classic formal tie designed to be worn with suits and dress shirts.",
+    "fit": "One size",
+    "material": "Polyester/silk-like fabric",
+    "care": "Spot clean or hand wash cold. Air dry. Do not tumble dry.",
+    "style_tips": ["Wear with a collared shirt and suit for work.", "Keep other accessories simple for a clean look."]
   },
   {
     "id": 32,
@@ -470,7 +587,11 @@
       "burgundy": "burgundy-tie.png"
     },
     "image": "burgundy-tie.png",
-    "description": "Classic formal tie designed to be worn with suits and dress shirts."
+    "description": "Classic formal tie designed to be worn with suits and dress shirts.",
+    "fit": "One size",
+    "material": "Polyester/silk-like fabric",
+    "care": "Spot clean or hand wash cold. Air dry. Do not tumble dry.",
+    "style_tips": ["Pairs well with black/white shirts.", "Works best with a suit for formal events."]
   },
 
 
@@ -492,7 +613,11 @@
       "white": "white-ankle-socks.png"
     },
     "image": "ankle-socks-pack-(3-pairs).png",
-    "description": "Soft cotton ankle socks in a pack of 3. Ideal for sports or daily wear."
+    "description": "Soft cotton ankle socks in a pack of 3. Ideal for sports or daily wear.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Tumble dry low.",
+    "style_tips": ["Great for everyday trainers and sneakers.", "Choose black for a cleaner look with dark outfits."]
   },
   {
     "id": 28,
@@ -505,7 +630,11 @@
       "black": "patterned-crew-socks.png"
     },
     "image": "patterned-crew-socks.png",
-    "description": "Fun patterned crew socks made from breathable fabric for all-day comfort."
+    "description": "Fun patterned crew socks made from breathable fabric for all-day comfort.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Tumble dry low.",
+    "style_tips": ["Good for casual outfits and sneakers.", "Adds a subtle pattern to plain outfits."]
   },
   {
     "id": 29,
@@ -518,7 +647,11 @@
       "black": "wool-winter-socks.png"
     },
     "image": "wool-winter-socks.png",
-    "description": "Thick wool socks designed to keep your feet warm in cold weather."
+    "description": "Thick wool socks designed to keep your feet warm in cold weather.",
+    "fit": "Regular",
+    "material": "Wool blend",
+    "care": "Machine wash cold (wool/handwash setting if available). Air dry.",
+    "style_tips": ["Best for cold weather outfits.", "Works great with boots."]
   },
   {
     "id": 30,
@@ -531,7 +664,11 @@
       "black": "no-show-socks-(pack-of-3).png"
     },
     "image": "no-show-socks-(pack-of-3).png",
-    "description": "Comfortable no-show socks perfect for sneakers and casual shoes."
+    "description": "Comfortable no-show socks perfect for sneakers and casual shoes.",
+    "fit": "Regular",
+    "material": "Cotton blend",
+    "care": "Machine wash cold (30°C). Air dry or tumble dry low.",
+    "style_tips": ["Perfect with sneakers and slip-ons.", "Great for summer outfits."]
   }
 
 

@@ -102,7 +102,8 @@ chat_context = {
         "style": None
     },
     "last_outfit": None, #memorise
-    "last_outfit_prefs": None
+    "last_outfit_prefs": None,
+    "active_product_id": None,
 }
 
 
@@ -568,7 +569,75 @@ def chatbot_reply(user_input):
     for greet in greetings:
         if user_input.strip() == greet or user_input.startswith(greet + " "):
             chat_context["last_intent"] = None
-            return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today?"
+            return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today? you can ask me to build an outfit, FAQs or whatever you want me to show you. 😊"
+
+
+
+    #askin bot about a product
+    active_id = chat_context.get("active_product_id")
+    active_product = next((p for p in products if p["id"] == active_id), None) if active_id else None
+
+    if active_product and user_input.strip() in ["help", "menu", "product help", "about this"]:
+        return {
+            "response": f"Sure! Ask me about <b>{active_product['name']}</b> 👇",
+            "buttons": [
+                {"label": "Fit & sizing", "value": "fit"},
+                {"label": "Material & comfort", "value": "material"},
+                {"label": "Care instructions", "value": "care"},
+                {"label": "What to wear with it", "value": "style"},
+                {"label": "Availability (sizes/colours)", "value": "availability"},
+            ]
+        }
+
+    if active_product:
+        # 1) sizing
+        if any(k in user_input for k in ["fit", "oversized", "slim", "regular", "size", "sizing"]):
+            fit = active_product.get("fit")
+            if fit:
+                return (
+                    f"<b>{active_product['name']}</b> fit: <b>{fit}</b>. "
+                    f"Available sizes: {', '.join(active_product.get('sizes', []))}."
+                )
+            return (
+                f"I don’t have fit info stored for <b>{active_product['name']}</b> yet. "
+                f"Sizes available: {', '.join(active_product.get('sizes', []))}."
+            )
+
+        # 2)Material
+        if any(k in user_input for k in ["material", "fabric", "cotton", "wool", "polyester", "comfortable", "comfort"]):
+            material = active_product.get("material")
+            if material:
+                return f"<b>{active_product['name']}</b> material: <b>{material}</b>."
+            return f"I don’t have material info stored for <b>{active_product['name']}</b> yet."
+
+        # 3)Care instructions
+        if any(k in user_input for k in ["care", "wash", "washing", "machine wash", "dry", "shrink", "iron"]):
+            care = active_product.get("care")
+            if care:
+                return f"<b>Care for {active_product['name']}:</b><br>{care}"
+            return f"I don’t have care instructions stored for <b>{active_product['name']}</b> yet."
+
+        # 4) Wwear with
+        if any(k in user_input for k in ["wear with", "style", "outfit", "match", "goes with"]):
+            tips = active_product.get("style_tips")
+            if tips:
+                return (
+                        f"<b>Styling ideas for {active_product['name']}:</b><br>"
+                        + "<br>".join(f"• {t}" for t in tips)
+                )
+            return f"For <b>{active_product['name']}</b>, a safe match is neutral bottoms (black/blue) + simple shoes."
+
+        # 5) Availability
+        if any(k in user_input for k in ["available", "availability", "stock", "colors", "colour", "sizes"]):
+            colors = ", ".join(active_product.get("colors", []))
+            sizes = ", ".join(active_product.get("sizes", []))
+            stock = active_product.get("stock")
+            return (
+                f"<b>{active_product['name']}</b><br>"
+                f"Stock: {stock}<br>"
+                f"Colours: {colors}<br>"
+                f"Sizes: {sizes}"
+            )
 
 
 
@@ -1050,8 +1119,19 @@ def product_page(product_id):
 def support_page():
     return render_template("support.html")
 
+@app.route("/chat/<int:product_id>")
+def chat_about_product(product_id):
+    product = next((p for p in products if p["id"] == product_id), None)
+    if not product:
+        return "Product not found", 404
+
+    chat_context["active_product_id"] = product_id
+    chat_context["last_product"] = product["name"]
+    return render_template("index.html", auto_open_menu=True, active_product_name=product["name"])
+
+
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
 
 print("DEBUG:", chat_context)
