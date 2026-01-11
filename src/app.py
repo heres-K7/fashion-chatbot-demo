@@ -1057,7 +1057,7 @@ def chatbot_reply(user_input):
 
 
     else:
-        return "I'm sorry, I didn't quite understand that. 🤔 I can help with product details, store hours, or returns. What would you like to know?"
+        return "I'm sorry, I didn't quite understand that. 🤔 I can help with building an outfit, list products, product details, store hours, or returns. What would you like to know? Or you can say 'help' to reach out support team's email."
 
 
 def get_product_image_path(product_name):
