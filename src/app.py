@@ -674,9 +674,9 @@ def chatbot_reply(user_input):
 
 
     #handling support, etc. messages
-    if any(word in user_input for word in ["support", "customer support", "helpdesk", "contact", "email", "complaint"]):
+    if any(word in user_input for word in ["support", "customer support", "helpdesk", "contact", "email", "complaint", "complain", "human"]):
         return {
-            "response": "Customer Support options 👇",
+            "response": "Customer Support options 👇: you can raise your complaint, report a technical issue via support team's email. Stay rested, and the team will sort out your raise.😊",
             "buttons": [
                 {"label": "Open Support Page", "value": "open support page"},
                 {"label": "Email Support", "value": "email support"}
