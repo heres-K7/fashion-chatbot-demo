@@ -104,6 +104,12 @@ chat_context = {
     "last_outfit": None, #memorise
     "last_outfit_prefs": None,
     "active_product_id": None,
+
+    "size_helper": {
+        "awaiting": False,
+        "height_cm": None,
+        "weight_kg": None
+    },
 }
 
 
@@ -522,12 +528,163 @@ def format_outfit(outfit, prefs):
 
 
 
+
+
+
+
+
+def product_preview_card(product):
+    img = product.get("image")
+    if not img:
+        slug = product["name"].lower().replace(" ", "-").replace("/", "-")
+        img = f"{slug}.jpg"
+
+    return f"""
+    <a class="chat-product-card" href="/product/{product['id']}" target="_blank">
+        <img class="chat-product-img" src="/static/product_images/{img}" alt="{product['name']}">
+        <span class="chat-product-info">
+            <span class="chat-product-name">{product['name']}</span>
+            <span class="chat-product-price">£{float(product['price']):.2f}</span>
+        </span>
+    </a>
+    """
+
+
+
+
+def is_store_about_question(text: str) -> bool:
+    t = text.lower().strip()
+
+    about_intent = any(phrase in t for phrase in [
+        "what is this", "what's this", "what is this store", "what's this store",
+        "tell me about", "about this store", "about the store",
+        "what do you sell", "what do you sell here",
+        "what is your store", "who are you", "what are you"
+    ])
+
+    mentions_store = any(w in t for w in ["store", "shop", "website", "site", "you"])
+
+    producty = any(w in t for w in [ #if it looks like a product browsing request, it's mot an 'about' question
+        "show", "find", "browse", "hoodie", "hoodies", "jacket", "jackets",
+        "t-shirt", "tshirts", "shoes", "socks", "accessories", "category",
+        "under", "size", "sizes", "price", "stock"
+    ])
+
+    possessive_products = re.search(r"(store|shop)[’']?s\s+\w+", t) is not None #block " store's
+
+    return about_intent and mentions_store and not producty and not possessive_products
+
+
+
+
+
+
+
+
+
+def parse_height_cm(text: str):
+    s = text.lower()
+
+    # 177cm or 177 cm
+    m = re.search(r"(\d{2,3})\s*cm", s)
+    if m:
+        return float(m.group(1))
+
+    # 1.77m or 1.77 m
+    m = re.search(r"(\d(?:\.\d{1,2})?)\s*m", s)
+    if m:
+        meters = float(m.group(1))
+        if 1.2 <= meters <= 2.3:
+            return meters * 100
+
+    # 5'11 or 5' 11 or 5ft 11in or 5 ft 11
+    m = re.search(r"(\d)\s*(?:ft|')\s*(\d{1,2})?", s)
+    if m:
+        ft = int(m.group(1))
+        inch = int(m.group(2)) if m.group(2) else 0
+        return (ft * 12 + inch) * 2.54
+
+    return None
+
+
+def parse_weight_kg(text: str):
+    s = text.lower()
+
+    # 77kg or 77 kg or 77kgs
+    m = re.search(r"(\d{2,3}(?:\.\d{1,2})?)\s*(kg|kgs|kilogram|kilograms)", s)
+    if m:
+        return float(m.group(1))
+
+    # 180lb or 180 lbs or 180 pounds
+    m = re.search(r"(\d{2,3}(?:\.\d{1,2})?)\s*(lb|lbs|pound|pounds)", s)
+    if m:
+        return float(m.group(1)) * 0.45359237 #convert, 1lb = 0.45359237 kg
+
+    return None
+
+
+
+def recommend_size(height_cm: float, weight_kg: float, available_sizes): #using body measure index and height in m
+    if not height_cm or not weight_kg:
+        return None
+
+    h_m = height_cm / 100
+    bmi = weight_kg / (h_m * h_m)
+
+    if bmi < 20:
+        size = "S"
+    elif bmi < 24:
+        size = "M"
+    elif bmi < 28:
+        size = "L"
+    else:
+        size = "XL"
+
+    # if recommended not available, choose close available
+    order = ["XS", "S", "M", "L", "XL", "XXL"]
+    avail = [s.upper() for s in available_sizes]
+    if size in avail:
+        return size
+
+    #pick the closest by index
+    if avail:
+        target_i = order.index(size) if size in order else order.index("M")
+        avail_sorted = sorted(avail, key=lambda s: abs(order.index(s) - target_i) if s in order else 999)
+        return avail_sorted[0]
+
+    return size
+
+
+
+def looks_like_measurements(text: str) -> bool:
+    t = text.lower()
+
+    if re.search(r"\b(cm|kg|lb|lbs|kgs|kilogram|kilograms|pound|pounds)\b", t):
+        return True
+    if re.search(r"\b\d\s*(ft|')\s*\d{0,2}\b", t):
+        return True
+    if re.search(r"\b\d{2,3}\s*cm\b", t):
+        return True
+    if re.search(r"\b\d(?:\.\d{1,2})?\s*m\b", t):
+        return True
+
+    return False
+
+
+
+
+
 def chatbot_reply(user_input):
     user_input = user_input.lower()
 
     tokens = user_input.split()
     corrected = []
+    UNIT_TOKENS = {"cm", "m", "kg", "kgs", "lb", "lbs", "ft", "in"}
     for word in tokens:
+        w = word.lower().strip()
+        if any(ch.isdigit() for ch in w) or w in UNIT_TOKENS:
+            corrected.append(word)
+            continue
         suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
         corrected.append(suggestions[0].term if suggestions else word)
     user_input = " ".join(corrected)
@@ -573,6 +730,23 @@ def chatbot_reply(user_input):
 
 
 
+    if is_store_about_question(user_input):
+        return (
+            "Welcome to <b>UoB Fashion!</b> ✨<br>"
+            "We’re a fashion store offering everyday looks — "
+            "t-shirts, hoodies, jackets, trousers, shoes, socks and accessories.<br>"
+            "If you tell me what you’re looking for, I’ll help you find something.<br>"
+            "Or just say 'build me an outfit' and I'll help you to create you an outfit for you occasion"
+        )
+    if "build me an outfit" in user_input or "outfit" in user_input:
+        chat_context["active_product_id"] = None
+        chat_context["size_helper"]["awaiting"] = False
+        chat_context["size_helper"]["height_cm"] = None
+        chat_context["size_helper"]["weight_kg"] = None
+
+
+
+
     #askin bot about a product
     active_id = chat_context.get("active_product_id")
     active_product = next((p for p in products if p["id"] == active_id), None) if active_id else None
@@ -589,18 +763,64 @@ def chatbot_reply(user_input):
             ]
         }
 
+
+    # the size recommendation
+    if active_product and chat_context.get("size_helper", {}).get("awaiting"):
+
+        if not looks_like_measurements(user_input):
+            chat_context["size_helper"]["awaiting"] = False
+            chat_context["size_helper"]["height_cm"] = None
+            chat_context["size_helper"]["weight_kg"] = None
+        else:
+            h = parse_height_cm(user_input)
+            w = parse_weight_kg(user_input)
+
+            if h:
+                chat_context["size_helper"]["height_cm"] = h
+            if w:
+                chat_context["size_helper"]["weight_kg"] = w
+
+            height_cm = chat_context["size_helper"]["height_cm"]
+            weight_kg = chat_context["size_helper"]["weight_kg"]
+
+            if not height_cm or not weight_kg:
+                missing = []
+                if not height_cm: missing.append("height (e.g., 181cm / 1.81m / 5'11)")
+                if not weight_kg: missing.append("weight (e.g., 75kg / 165lb)")
+                return "Could you tell me your " + " and ".join(missing) + "?"
+
+            rec = recommend_size(height_cm, weight_kg, active_product.get("sizes", []))
+            chat_context["size_helper"]["awaiting"] = False
+            chat_context["size_helper"]["height_cm"] = None
+            chat_context["size_helper"]["weight_kg"] = None
+
+            print("DEBUG size_helper awaiting:", chat_context["size_helper"])
+            print("DEBUG parsed height/weight:", h, w)
+
+            return (
+                f"Based on <b>{height_cm:.0f}cm</b> and <b>{weight_kg:.0f}kg</b>, "
+                f"I’d suggest size <b>{rec}</b> ✅<br>"
+                f"(This is a rough guide — if you prefer looser fit, consider one size up.)"
+            )
+
+
     if active_product:
         # 1) sizing
         if any(k in user_input for k in ["fit", "oversized", "slim", "regular", "size", "sizing"]):
             fit = active_product.get("fit")
-            if fit:
-                return (
-                    f"<b>{active_product['name']}</b> fit: <b>{fit}</b>. "
-                    f"Available sizes: {', '.join(active_product.get('sizes', []))}."
-                )
+            sizes = active_product.get("sizes", [])
+
+            chat_context["size_helper"]["awaiting"] = True
+            chat_context["size_helper"]["height_cm"] = None
+            chat_context["size_helper"]["weight_kg"] = None
+
+            fit_text = f"<b>{fit}</b>" if fit else "<b>Not specified</b>"
             return (
-                f"I don’t have fit info stored for <b>{active_product['name']}</b> yet. "
-                f"Sizes available: {', '.join(active_product.get('sizes', []))}."
+                f"<b>{active_product['name']}</b><br>"
+                f"Fit: {fit_text}<br>"
+                f"Available sizes: {', '.join(sizes)}<br><br>"
+                f"If you tell me your <b>height</b> and <b>weight</b>, I’ll recommend a size for you 😊<br>"
+                f"Example: <i>177cm 77kg</i> or <i>5'11 165lb</i>"
             )
 
         # 2)Material
@@ -674,7 +894,7 @@ def chatbot_reply(user_input):
 
 
     #handling support, etc. messages
-    if any(word in user_input for word in ["support", "customer support", "helpdesk", "contact", "email", "complaint", "complain", "human"]):
+    if any(word in user_input for word in ["support", "customer support", "helpdesk", "contact", "email", "complaint", "complain", "human", "agent"]):
         return {
             "response": "Customer Support options 👇: you can raise your complaint, report a technical issue via support team's email. Stay rested, and the team will sort out your raise.😊",
             "buttons": [
@@ -809,17 +1029,17 @@ def chatbot_reply(user_input):
         return "🚚 We offer free delivery on orders over £50, £4.99 delivery fees apply if less. Standard shipping takes 3–5 business days."
 
     elif "return" in user_input or "refund" in user_input:
-        return "↩️ You can return any item within 14 days of purchase, as long as it's unworn and in original packaging."
+        return "↩️ You can return any item within 14 days of purchase, as long as it's unworn and in original packaging. You can follow the instructions in the return page to process your refunds and return the items"
 
-    elif "thank" in user_input:
+    elif "thank" in user_input or "love you" in user_input or "awesome" in user_input or "cool" in user_input or "Cheers" in user_input:
         chat_context["last_intent"] = None
-        return "You're welcome! 😊 Let me know if you need help with anything else."
+        return "I'm glad I could help! 😊 Let me know if you need help with anything else."
 
-    elif "bye" in user_input or "goodbye" in user_input or "see you" in user_input:
+    elif "bye" in user_input or "goodbye" in user_input or "see you" in user_input or "take care" in user_input:
         chat_context["last_intent"] = None
         return "Goodbye! 👋 Have a great day."
 
-    elif "how are you" in user_input:
+    elif "how are you" in user_input or "what's good" in user_input or "how is it going" in user_input:
         chat_context["last_intent"] = None
         return "I'm just a helpful bot 😄 How can I assist you today?"
 
@@ -843,6 +1063,29 @@ def chatbot_reply(user_input):
 
 
 
+    cleaned = user_input.replace(" ", "").lower()
+    for p in products:
+        pname_clean = p["name"].lower().replace(" ", "")
+        if pname_clean in cleaned:
+            chat_context["last_product"] = p["name"]
+            chat_context["last_category"] = None
+            chat_context["last_intent"] = None
+
+            if any(k in user_input for k in ["price", "cost"]):
+                return get_product_price(p["name"])
+            if any(k in user_input for k in ["stock", "available", "availability", "quantity"]):
+                return get_product_stock(p["name"])
+            if any(k in user_input for k in ["size", "sizes", "fit", "sizing"]):
+                return get_product_sizes(p["name"])
+            if any(k in user_input for k in ["color", "colour", "colors", "colours"]):
+                return get_product_colors(p["name"])
+
+            card = product_preview_card(p)
+            return (f"You mentioned <b>{p['name']}</b>. Would you like to know its price, stock, sizes or colours?"
+                    f"{card}"
+                    )
+
+
 
     if asked_for_products:
 
@@ -850,6 +1093,7 @@ def chatbot_reply(user_input):
         if any(p in user_input for p in all_phrases):
             return "You’ll probably find it easier to browse everything in the Store page (with pictures 😅). Try /store or click Store in the navbar!"
 
+        chat_context["active_product_id"] = None
         matched = filter_products(filters)
         print("DEBUG matched names:", [p["name"] for p in matched])
 
@@ -933,25 +1177,24 @@ def chatbot_reply(user_input):
         return "Which product would you like to know the sizes of?"
 
     elif "price" in user_input or "cost" in user_input:
-        chat_context["last_intent"] = "price"
-        if chat_context["last_product"]:
-            return get_product_price(chat_context["last_product"])
         cleaned_input = user_input.replace(" ", "").lower()
+        if chat_context["last_product"]:
+            chat_context["last_intent"] = None
+            return get_product_price(chat_context["last_product"])
+
         for product in products:
-            product_name_no_spaces = product["name"].lower().replace(" ", "")    #if some say monalisa instead of mona lisa
+            product_name_no_spaces = product["name"].lower().replace(" ", "") #if some say monalisa instead of mona lisa
             product_name_words = product["name"].lower().split()
 
             if (product_name_no_spaces in cleaned_input or
-                any(word in cleaned_input for word in product_name_words)):
+            any(word in cleaned_input for word in product_name_words)):
                 chat_context["last_product"] = product["name"]
-                return get_product_price(product["name"])
+                chat_context["last_intent"] = None
 
-        if chat_context["last_product"]:
-            return get_product_price(chat_context["last_product"])
+        chat_context["last_intent"] = "price"
 
         if chat_context["last_category"]:
             return f"Which {chat_context['last_category']} would you like to know its price?"
-
         return "Which product would you like the price for?"
 
     elif "stock" in user_input or "quantity" in user_input or "available" in user_input or "availability" in user_input:
@@ -988,12 +1231,17 @@ def chatbot_reply(user_input):
             ):
                 chat_context["last_product"] = product["name"]
 
-                if "last_intent" in chat_context and chat_context["last_intent"] == "price":
+                if any(k in user_input for k in ["price", "cost"]):
+                    chat_context["last_intent"] = None
                     return get_product_price(product["name"])
 
 
-
-                return f"You mentioned {product['name']}. Would you like to know its price, stock, sizes or colours?"
+                chat_context["last_intent"] = None
+                card = product_preview_card(product)
+                return (
+                    f"You mentioned <b>{product['name']}</b>. Would you like to know its price, stock, sizes or colours?<br>"
+                    f"{card}"
+                )
 
 
     elif any(word in user_input for word in category_aliases):

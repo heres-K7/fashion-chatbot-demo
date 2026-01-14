@@ -224,3 +224,54 @@ h2 {
 .ask-bot-btn:hover {
     opacity: 0.85;
 }
+
+
+
+
+
+
+
+
+.chat-product-card{ /**previewing a product**/
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-decoration:none;
+    color:inherit;
+    margin-top:10px;
+    padding:12px;
+    border-radius:16px;
+    background:#fff;
+    border:1px solid #e8e8e8;
+}
+
+.chat-product-card:hover{
+    background:#f6f6f6;
+}
+
+.chat-product-img{
+    width:72px;
+    height:72px;
+    object-fit:cover;
+    border-radius:14px;
+    border:1px solid #ddd;
+    flex-shrink:0;
+}
+
+.chat-product-info{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:0;
+}
+
+.chat-product-name{
+    font-weight:700;
+    font-size:16px;
+    line-height:1.2;
+}
+
+.chat-product-price{
+    font-size:14px;
+    opacity:0.85;
+}
