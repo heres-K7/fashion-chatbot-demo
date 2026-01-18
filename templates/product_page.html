@@ -1,19 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ product.name }}</title>
-    <link rel="stylesheet" href="/static/store.css">
-</head>
-<body>
+{% extends "base.html" %}
 
-<nav class="navbar">
-    <a href="/store">Store</a>
-    <a href="/support">Customer Support</a>
-</nav>
+{% block title %}{{ product.name }}{% endblock %}
 
+{% block content %}
 <div class="product-page">
     <div class="product-image-wrapper">
-        <img src="/static/product_images/{{ product.image }}" class="product-img">
+        <img src="/static/product_images/{{ product.image }}" class="product-img" alt="{{ product.name }}">
     </div>
 
     <div class="product-info">
@@ -28,12 +20,86 @@
             {% endfor %}
         </div>
         {% endif %}
+
+        <button class="ask-bot-btn" id="askBotBtn" data-product-id="{{ product.id }}">
+            Ask chatbot about this product 💬
+        </button>
     </div>
-    <a class="ask-bot-btn" href="/chat/{{ product.id }}">
-        Ask chatbot about this product 💬
-    </a>
 </div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const askBtn = document.getElementById("askBotBtn");
+        const popup = document.getElementById("chatbotPopup");
+        const input = document.getElementById("popup-user-input");
+        const chatbox = document.getElementById("popup-chatbox");
 
-</body>
-</html>
+        if (!askBtn || !popup || !chatbox) return;
+
+        //to prevent duplicates if clicked twice
+        let loading = false;
+
+        function renderBotPayload(payload) {
+            //to remove any previous product menu injected
+            const old = chatbox.querySelector(".product-menu-bubble");
+            if (old) old.remove();
+
+            const div = document.createElement("div");
+            div.className = "msg-bubble bot product-menu-bubble";
+
+            div.innerHTML = `<p>${payload.response}</p>`;
+
+            if (payload.buttons && payload.buttons.length) {
+                const btnWrap = document.createElement("div");
+                btnWrap.className = "quick-buttons";
+
+                payload.buttons.forEach(b => {
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.textContent = b.label;
+                    btn.addEventListener("click", async () => {
+                        input.value = b.value;
+                        document.getElementById("popup-chat-form").dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+                    });
+                    btnWrap.appendChild(btn);
+                });
+
+                div.appendChild(btnWrap);
+            }
+
+            chatbox.appendChild(div);
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+
+        askBtn.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if (loading) return;
+            loading = true;
+
+            const productId = askBtn.dataset.productId;
+
+            popup.classList.remove("hidden");
+            input?.focus();
+
+            await fetch("/set-active-product", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ product_id: productId })
+            });
+
+            const res = await fetch("/get", {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: new URLSearchParams({ message: "menu" })
+            });
+
+            const data = await res.json();
+            renderBotPayload(data);
+
+            loading = false;
+        });
+    });
+</script>
+{% endblock %}

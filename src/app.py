@@ -526,6 +526,14 @@ def format_outfit(outfit, prefs):
     response += "<br><br>Want it more <b>minimal</b>, <b>bold</b>, or <b>trendy</b>?"
     return response
 
+def outfit_response_with_buttons(html):
+    return {
+        "response": html,
+        "buttons": [
+            {"label": "Try another outfit", "value": "try another outfit"},
+            {"label": "Start new outfit", "value": "build me an outfit"}
+        ]
+    }
 
 
 
@@ -539,15 +547,16 @@ def product_preview_card(product):
         slug = product["name"].lower().replace(" ", "-").replace("/", "-")
         img = f"{slug}.jpg"
 
-    return f"""
-    <a class="chat-product-card" href="/product/{product['id']}" target="_blank">
-        <img class="chat-product-img" src="/static/product_images/{img}" alt="{product['name']}">
-        <span class="chat-product-info">
-            <span class="chat-product-name">{product['name']}</span>
-            <span class="chat-product-price">£{float(product['price']):.2f}</span>
-        </span>
-    </a>
-    """
+    return (
+        f"<a class='chat-product-card' href='/product/{product['id']}' target='_blank'>"
+        f"<img class='chat-product-img' src='/static/product_images/{img}' alt='{product['name']}'>"
+        f"<span class='chat-product-info'>"
+        f"<span class='chat-product-name'>{product['name']}</span>"
+        f"<span class='chat-product-price'>£{float(product['price']):.2f}</span>"
+        f"</span>"
+        f"</a>"
+    )
+
 
 
 
@@ -729,6 +738,28 @@ def chatbot_reply(user_input):
             return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today? you can ask me to build an outfit, FAQs or whatever you want me to show you. 😊"
 
 
+    about_bot = ["what can you do", "what are your features", "features", "what can you provide me",
+                 "what could you do", "what could you provide me", "what are you capable of", "what are your abilities",
+                 "your abilities", "what do you do", "what do you help with", "what is your purpose",
+                 "what is this bot", "who are you", "what are you", "how do i use you",
+                 "how do you work", "how can you help me", "what can you help me with", "how can you help",
+                 ]
+
+    for bot_features in about_bot:
+        if user_input.strip() == bot_features or user_input.startswith(bot_features + " "):
+            chat_context["last_intent"] = None
+            return (
+                "<b>I can help with quite a few things</b>😊<br>"
+                "<br"
+                "• I can build outfits based on your style🕴🪄<br>"
+                "• You can ask me to browse categories, like hoodies or jackets💻<br>"
+                "• I can filter products by price (for example, shoes under £50)💸<br>"
+                "• You can search by colour, like black jackets🔎<br>"
+                "• I answer common questions about opening hours, location, shipping, and returns🤔<br>"
+                "• I can also recommend sizes using the “Ask chatbot about this product 💬” button on product's pages📏<br>"
+                "<br>"
+                "Just tell me what you’re looking for!🌟"
+                    )
 
     if is_store_about_question(user_input):
         return (
@@ -922,16 +953,45 @@ def chatbot_reply(user_input):
 
 
 
+
+    if any(q in user_input for q in ["what does", "what is", "meaning of", "what's", "mean"]) and any(
+        w in user_input for w in ["trendy", "minimal", "bold"]
+    ):
+        if "minimal" in user_input:
+            return (
+                "<b>Minimal</b> style got simple + clean: neutral colours, fewer patterns, and timeless pieces. "
+                "Example: plain tee/shirt + jeans/trousers + simple shoes."
+            )
+        if "bold" in user_input:
+            return (
+                "<b>Bold</b> got stronger colours, standout pieces, or a sharper contrast. "
+                "Example: graphic top / leather / bright accent + confident shoes."
+            )
+        if "trendy" in user_input:
+            return (
+                "<b>Trendy</b> means more “current style”: modern cuts, popular combos, and streetwear touches. "
+                "Example: oversized hoodie, cargo pants, chunky sneakers, caps/bags."
+            )
+
     #after building and outfit, if user wants adjustments, rebuild with style preference
     if chat_context.get("last_outfit") and any(s in user_input for s in ["minimal", "bold", "trendy"]):
-        prefs = chat_context.get("outfit_prefs", {})
+        prefs = (chat_context.get("last_outfit_prefs") or {}).copy()
         if "minimal" in user_input: prefs["style"] = "minimal"
         elif "bold" in user_input: prefs["style"] = "bold"
         else: prefs["style"] = "trendy"
 
+        chat_context["last_outfit_prefs"] = prefs
         outfit = build_outfit(prefs)
         chat_context["last_outfit"] = outfit
-        return format_outfit(outfit, prefs)
+        html = format_outfit(outfit, prefs)
+
+        return {
+            "response": html,
+            "buttons": [
+                {"label": "Try another outfit", "value": "try another outfit"},
+                {"label": "Start new outfit", "value": "build me an outfit"}
+            ]
+        }
 
 
 
@@ -948,7 +1008,14 @@ def chatbot_reply(user_input):
 
         chat_context["last_outfit"] = None
 
-        return "Sure 😄 What’s the occasion? (casual / work / party)"
+        return {
+            "response": "Sure 😄 What’s the occasion? 🤔👇",
+            "buttons": [
+                {"label": "Casual", "value": "casual"},
+                {"label": "Work", "value": "work"},
+                {"label": "Party", "value": "party"},
+            ]
+        }
 
 
 
@@ -964,8 +1031,25 @@ def chatbot_reply(user_input):
 
                 chat_context["outfit_prefs"] = prefs
                 chat_context["outfit_step"] = "weather"
-                return "Nice. What’s the weather like? (cold / mild / hot / rainy)"
-            return "Pick one please: casual / work / party"
+
+                return {
+                    "response": "Cool!. What’s the weather like? 👇",
+                    "buttons": [
+                        {"label": "Cold ❄️", "value": "cold"},
+                        {"label": "Mild 🙂", "value": "mild"},
+                        {"label": "Hot ☀️", "value": "hot"},
+                        {"label": "Rainy 🌧️", "value": "rainy"},
+                    ]
+                }
+
+            return {
+                "response": "Sure 😄 What’s the occasion? 🤔👇",
+                "buttons": [
+                    {"label": "Casual", "value": "casual"},
+                    {"label": "Work", "value": "work"},
+                    {"label": "Party", "value": "party"},
+                ]
+            }
 
 
 
@@ -978,8 +1062,26 @@ def chatbot_reply(user_input):
 
                 chat_context["outfit_prefs"] = prefs
                 chat_context["outfit_step"] = "colors"
-                return "Any preferred colours? (e.g., black, navy, white) or say 'no'"
-            return "Choose: cold / mild / hot / rainy"
+                return {
+                    "response": "Choose or type your preferred colour. (or press No Preferences) 👇",
+                    "buttons": [
+                        {"label": "No preference", "value": "no"},
+                        {"label": "Black", "value": "black"},
+                        {"label": "White", "value": "white"},
+                        {"label": "Navy", "value": "navy"},
+
+                    ]
+                }
+
+            return {
+                "response": "Cool!. What’s the weather like? 👇",
+                "buttons": [
+                    {"label": "Cold ❄️", "value": "cold"},
+                    {"label": "Mild 🙂", "value": "mild"},
+                    {"label": "Hot ☀️", "value": "hot"},
+                    {"label": "Rainy 🌧️", "value": "rainy"},
+                ]
+            }
 
 
         if step == "colors":
@@ -991,7 +1093,12 @@ def chatbot_reply(user_input):
 
             chat_context["outfit_prefs"] = prefs
             chat_context["outfit_step"] = "budget"
-            return "What’s your budget in £? (e.g., 80) or say 'no'"
+            return {
+                "response": "What’s your budget in £? (e.g., 80) or click 'open budget'",
+                "buttons": [
+                {"label": "Open Budget💸", "value": "no"},
+                ]
+            }
 
         if step == "budget":
             if "no" in user_input or "any" in user_input:
@@ -1239,8 +1346,10 @@ def chatbot_reply(user_input):
                 chat_context["last_intent"] = None
                 card = product_preview_card(product)
                 return (
-                    f"You mentioned <b>{product['name']}</b>. Would you like to know its price, stock, sizes or colours?<br>"
-                    f"{card}"
+                    f"You mentioned <b>{product['name']}</b>. "
+                    f"Would you like to know its price, stock, sizes or colours?"
+                    f"<br><br>"
+                    f"{product_preview_card(product)}"
                 )
 
 
@@ -1376,6 +1485,14 @@ def chat_about_product(product_id):
     chat_context["active_product_id"] = product_id
     chat_context["last_product"] = product["name"]
     return render_template("index.html", auto_open_menu=True, active_product_name=product["name"])
+
+
+@app.route("/set-active-product", methods=["POST"])
+def set_active_product():
+    data = request.get_json()
+    chat_context["active_product_id"] = int(data["product_id"])
+    chat_context["size_helper"]["awaiting"] = False
+    return jsonify({"status": "ok"})
 
 
 

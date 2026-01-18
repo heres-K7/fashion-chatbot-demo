@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{% block title %}UoB Fashion{% endblock %}</title>
+  <link rel="stylesheet" href="/static/store.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+<nav class="navbar">
+  <a href="/store">Store</a>
+  <a href="/support">Customer Support</a>
+</nav>
+
+{% block content %}{% endblock %}
+
+<button id="chatbotToggle" class="chatbot-toggle">💬</button>
+
+<div id="chatbotPopup" class="chatbot-popup hidden">
+  <div class="chatbot-header">
+    <span>🛍️ Customer Support Chatbot</span>
+    <button id="chatbotClose" class="chatbot-close">✕</button>
+  </div>
+
+  <div id="popup-chatbox" class="chatbot-body"></div>
+
+  <form id="popup-chat-form" class="chatbot-input">
+    <input id="popup-user-input" type="text" placeholder="Type your message..." autocomplete="off" />
+    <button type="submit">Send</button>
+  </form>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const toggleBtn = document.getElementById("chatbotToggle");
+    const popup = document.getElementById("chatbotPopup");
+    const closeBtn = document.getElementById("chatbotClose");
+
+    const form = document.getElementById("popup-chat-form");
+    const input = document.getElementById("popup-user-input");
+    const chatbox = document.getElementById("popup-chatbox");
+
+    if (!toggleBtn || !popup || !closeBtn || !form || !input || !chatbox) {
+      console.log("Chatbot popup elements not found.");
+      return;
+    }
+
+    //chat storage helper
+    const STORAGE_KEY = "popup_chat_history_v1";
+    const GREET_KEY = "popup_chat_greeted_v1";
+    const OPEN_KEY = "popup_chat_open_v1";
+
+    function saveHistory() {
+      sessionStorage.setItem(STORAGE_KEY, chatbox.innerHTML);
+    }
+
+    function loadHistory() {
+      const html = sessionStorage.getItem(STORAGE_KEY);
+      if (html) chatbox.innerHTML = html;
+    }
+
+    function setGreeted(val) {
+      sessionStorage.setItem(GREET_KEY, val ? "1" : "0");
+    }
+
+    function isGreeted() {
+      return sessionStorage.getItem(GREET_KEY) === "1";
+    }
+
+    function setOpen(val) {
+      sessionStorage.setItem(OPEN_KEY, val ? "1" : "0");
+    }
+
+    function isOpen() {
+      return sessionStorage.getItem(OPEN_KEY) === "1";
+    }
+
+    //rendering helpers
+    function escapeHtml(text) { //preventing user from breaking html
+      return text.replace(/[&<>"']/g, (c) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[c]));
+    }
+
+    function addBubble(text, who) {
+      const div = document.createElement("div");
+      div.className = "msg-bubble " + who;
+
+      if (who === "user") {
+        div.innerHTML = "<p>" + escapeHtml(text) + "</p>";
+      } else {
+        // bot can return html (cards/buttons)
+        if (String(text).trim().startsWith("<")) div.innerHTML = text;
+        else div.innerHTML = "<p>" + text + "</p>";
+      }
+
+      chatbox.appendChild(div);
+      chatbox.scrollTop = chatbox.scrollHeight;
+      saveHistory();
+    }
+
+    function renderBotPayload(payload) { //data received
+      if (typeof payload === "string") {
+        addBubble(payload, "bot");
+        return;
+      }
+
+      if (!payload || typeof payload !== "object") {
+        addBubble("Sorry 😅 something went wrong.", "bot");
+        return;
+      }
+
+      const html = payload.response || "";
+      const buttons = Array.isArray(payload.buttons) ? payload.buttons : [];
+
+      const div = document.createElement("div");
+      div.className = "msg-bubble bot";
+
+      let buttonsHtml = "";
+      if (buttons.length) {
+        buttonsHtml = `
+          <div class="quick-buttons">
+            ${buttons.map(b => `<button type="button" data-msg="${b.value}">${b.label}</button>`).join("")}
+          </div>
+        `;
+      }
+
+      div.innerHTML = `
+        ${String(html).trim().startsWith("<") ? html : `<p>${html}</p>`}
+        ${buttonsHtml}
+      `;
+
+      chatbox.appendChild(div);
+      chatbox.scrollTop = chatbox.scrollHeight;
+      saveHistory();
+    }
+
+    function addTyping() {
+      const div = document.createElement("div");
+      div.className = "msg-bubble bot";
+      div.id = "typing-bubble";
+      div.innerHTML = `
+        <div class="typing">
+          <span></span><span></span><span></span>
+        </div>
+      `;
+      chatbox.appendChild(div);
+      chatbox.scrollTop = chatbox.scrollHeight;
+      return div;
+    }
+
+    //quick buttons click handler
+    //buttons inside bot messages still work after page reload
+    chatbox.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-msg]");
+      if (!btn) return;
+
+      const msg = btn.getAttribute("data-msg");
+      input.value = msg;
+      form.dispatchEvent(new Event("submit", { cancelable: true }));
+    });
+
+    loadHistory();
+
+    if (isOpen()) {
+      openPopup();
+    }
+
+    function openPopup() {
+      popup.classList.remove("hidden");
+      requestAnimationFrame(() => popup.classList.add("open"));
+      setOpen(true);
+    }
+
+    function closePopup() {
+      popup.classList.remove("open");
+      setOpen(false);
+      setTimeout(() => popup.classList.add("hidden"), 200);
+    }
+
+    toggleBtn.addEventListener("click", () => {
+      const isHidden = popup.classList.contains("hidden");
+
+      if (isHidden) {
+        openPopup();
+        input.focus();
+
+        if (!isGreeted()) {
+          addBubble(
+                  "Hi 👋 I'm your Customer Support Chatbot. How can I help you today? You can ask me to build an outfit, browse products, or use the help menu 😊",
+                  "bot"
+          );
+          setGreeted(true);
+        }
+      } else {
+        closePopup();
+      }
+    });
+
+    closeBtn.addEventListener("click", closePopup);
+
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      addBubble(msg, "user");
+      input.value = "";
+
+      const typingDiv = addTyping();
+
+      const res = await fetch("/get", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ message: msg })
+      });
+
+      const data = await res.json();
+
+      setTimeout(() => {
+        typingDiv.remove();
+
+        if (data && typeof data === "object" && Array.isArray(data.buttons)) {
+          renderBotPayload(data);
+        } else {
+          renderBotPayload(data.response);
+        }
+
+      }, 2000);
+    });
+  });
+</script>
+
+
+
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

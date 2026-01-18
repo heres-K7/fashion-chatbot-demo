@@ -1,20 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>UoB Fashion</title>
-    <link rel="stylesheet" href="/static/store.css">
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block title %}UoB Fashion{% endblock %}
 
-<nav class="navbar">
-    <a href="/store">Store</a>
-    <a href="/support">Customer Support</a>
-</nav>
-
-<a href="/chat" class="chat-bubble">
-    💬
-</a>
+{% block content %}
 
 <h1>Welcome to UoB Fashion</h1>
 
@@ -27,5 +15,4 @@
     {% endfor %}
 </div>
 
-</body>
-</html>
+{% endblock %}

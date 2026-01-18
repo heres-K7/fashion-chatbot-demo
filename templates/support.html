@@ -1,16 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Customer Support</title>
-    <link rel="stylesheet" href="/static/store.css">
-</head>
-<body>
+{% extends "base.html" %}
 
-<nav class="navbar">
-    <a href="/store">Store</a>
-    <a href="/support">Customer Support</a>
-    <a href="/chat">Chatbot</a>
-</nav>
+{% block title %}Customer Support{% endblock %}
+
+{% block content %}
 
 <div class="support-container">
 
@@ -19,9 +11,9 @@
 
     <div class="support-options">
 
-        <a href="/chat" class="support-card">
-            💬 <br> Open Chatbot Assistant
-        </a>
+        <div class="support-card">
+            💬 <br> Use the chatbot (bottom right)
+        </div>
 
         <a href="mailto:kxa284@student.bham.ac.uk" class="support-card">
             📧 <br> Email Support
@@ -61,15 +53,48 @@
     <div class="faq-item">
         <button class="faq-question">How can I contact support?</button>
         <div class="faq-answer">
-            <p>You can email us anytime or use the chatbot for instant assistance.</p>
+            <p>You can email us anytime or use the chatbot for instant assistance. Please find our email at the top of this page.</p>
         </div>
     </div>
 
+    <div class="faq-item">
+        <button class="faq-question">What can the chatbot do for me?</button>
+        <div class="faq-answer">
+            <p>Our chatbot helps you find what you want faster and choose the right size.</p>
+            <ul>
+                <li><strong>Build outfits</strong> based on your style.</li>
+                <li><strong>Browse categories</strong> (e.g. “Show me hoodies”).</li>
+                <li><strong>Filter by price</strong> (e.g. “Show me shoes under £50”).</li>
+                <li><strong>Search by colour</strong> (e.g. “Show me black jackets”).</li>
+                <li><strong>Answer FAQs</strong> about opening hours, location, shipping and returns</li>
+                <li><strong>Recommend sizes</strong> using the <em>“Ask chatbot about this product 💬”</em> button on product pages.</li>
+            </ul>
+            <p>If you’re not sure what to type, just send <strong>help</strong>.</p>
+        </div>
+    </div>
+
+
+    <div class="faq-item">
+        <button class="faq-question">How can I know the perfect size for me?</button>
+        <div class="faq-answer">
+            <p>Finding the right size is easy with our chatbot.</p>
+            <ul>
+                <li>Click <em>“Ask chatbot about this product 💬”</em> on the product's page.</li>
+                <li>Select <strong>Fit &amp; sizing</strong>.</li>
+                <li>Enter your height and weight.</li>
+            </ul>
+            <p>The chatbot will recommend the size that fits you best.</p>
+        </div>
+    </div>
+
+
 </div>
 
+{% endblock %}
 
+{% block extra_js %}
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
 
         const questions = document.querySelectorAll(".faq-question");
         const searchInput = document.getElementById("faq-search");
@@ -79,9 +104,7 @@
                 const answer = q.nextElementSibling;
 
                 document.querySelectorAll(".faq-answer").forEach(a => {
-                    if (a !== answer) {
-                        a.style.display = "none";
-                    }
+                    if (a !== answer) a.style.display = "none";
                 });
 
                 answer.style.display = (answer.style.display === "block") ? "none" : "block";
@@ -95,18 +118,13 @@
                 const question = item.querySelector(".faq-question").textContent.toLowerCase();
                 const answer = item.querySelector(".faq-answer").textContent.toLowerCase();
 
-                if (question.includes(searchText) || answer.includes(searchText)) {
-                    item.style.display = "block";
-                } else {
-                    item.style.display = "none";
-                }
+                item.style.display =
+                    question.includes(searchText) || answer.includes(searchText)
+                        ? "block"
+                        : "none";
             });
         });
 
     });
 </script>
-
-
-
-</body>
-</html>
+{% endblock %}
