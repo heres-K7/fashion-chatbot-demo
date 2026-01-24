@@ -73,9 +73,22 @@
       return sessionStorage.getItem(OPEN_KEY) === "1";
     }
 
+    function openPopup() {
+      popup.classList.remove("hidden");
+      requestAnimationFrame(() => popup.classList.add("open"));
+      setOpen(true);
+      input.focus();
+    }
+
+    function closePopup() {
+      popup.classList.remove("open");
+      setOpen(false);
+      setTimeout(() => popup.classList.add("hidden"), 180);
+    }
+
     //rendering helpers
     function escapeHtml(text) { //preventing user from breaking html
-      return text.replace(/[&<>"']/g, (c) => ({
+      return String(text).replace(/[&<>"']/g, (c) => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
@@ -164,28 +177,14 @@
 
     loadHistory();
 
-    if (isOpen()) {
-      openPopup();
-    }
+    if (isOpen()) openPopup();
 
-    function openPopup() {
-      popup.classList.remove("hidden");
-      requestAnimationFrame(() => popup.classList.add("open"));
-      setOpen(true);
-    }
-
-    function closePopup() {
-      popup.classList.remove("open");
-      setOpen(false);
-      setTimeout(() => popup.classList.add("hidden"), 200);
-    }
 
     toggleBtn.addEventListener("click", () => {
       const isHidden = popup.classList.contains("hidden");
 
       if (isHidden) {
         openPopup();
-        input.focus();
 
         if (!isGreeted()) {
           addBubble(
@@ -200,7 +199,6 @@
     });
 
     closeBtn.addEventListener("click", closePopup);
-
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
@@ -223,15 +221,63 @@
 
       setTimeout(() => {
         typingDiv.remove();
-
-        if (data && typeof data === "object" && Array.isArray(data.buttons)) {
+        if (data && typeof data === "object" && (data.response || data.buttons)) {
           renderBotPayload(data);
         } else {
-          renderBotPayload(data.response);
+          renderBotPayload(data.response ?? data);
         }
-
-      }, 2000);
+      }, 800);
     });
+
+    // -ask bot about this product-
+    const askBtn = document.getElementById("askBotBtn");
+    let askBotBusy = false;
+
+    async function sendBotOnlyMessage(msg) {
+      const typingDiv = addTyping();
+
+      const res = await fetch("/get", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ message: msg })
+      });
+
+      const data = await res.json();
+
+      setTimeout(() => {
+        typingDiv.remove();
+        if (data && typeof data === "object" && (data.response || data.buttons)) {
+          renderBotPayload(data);
+        } else {
+          renderBotPayload(data.response ?? data);
+        }
+      }, 400);
+    }
+
+    if (askBtn) {
+      askBtn.addEventListener("click", async () => {
+        if (askBotBusy) return;
+        askBotBusy = true;
+
+        try {
+          const productId = askBtn.dataset.productId;
+          if (!productId) return;
+
+          openPopup();
+
+          await fetch("/set-active-product", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ product_id: productId })
+          });
+
+          // askin for product menu without showing "menu" as a user bubble
+          await sendBotOnlyMessage("menu");
+        } finally {
+          askBotBusy = false;
+        }
+      });
+    }
   });
 </script>
 

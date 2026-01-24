@@ -78,15 +78,51 @@ category_aliases = {
 }
 
 
-FRUSTRATION_PHRASES = ["not working", "doesn't work", "doesnt work", "broken", "bug", "error", "useless"
-                       "waste of time", "annoying", "mad", "angry", "frustrating", "bad", "sad"
-                       "terrible", "stupid", "hate", "worst", "ridiculous", "Pissed off", "pissed"
-                       ]
+FRUSTRATION_PHRASES = [
+    "not working", "doesn't work", "doesnt work",
+    "waste of time", "pissed off", "damn you", "damn it"
+]
+
+SWEAR_WORDS = {"hell", "damn", "wth"}
+NEGATIVE_WORDS = {
+    "broken", "bug", "error", "useless", "annoying", "mad", "angry", "frustrating",
+    "bad", "sad", "trash", "terrible", "stupid", "hate", "worst", "ridiculous",
+    "pissed"
+}
+
 FRUSTRATION_EMOJIS = ["😡", "🤬", "😤", "😠", "😞", "💩", "🤦‍♂️"]
 NEGATIVE_PUNCTUATION = ["!!!", "!!", "??", "?!", "!?"]
 
+def detect_frustration(text: str) -> bool:
+    t = text.lower().strip()
 
-#memorise last mentioned text
+    if t in {"hi", "hello", "hey", "hya"}:
+        return False
+
+    if any(p in t for p in FRUSTRATION_PHRASES):
+        return True
+
+    if any(p in text for p in NEGATIVE_PUNCTUATION):
+        return True
+    if any(e in text for e in FRUSTRATION_EMOJIS):
+        return True
+
+    words = re.findall(r"[a-z']+", t)
+
+    if any(w in SWEAR_WORDS for w in words):
+        if len(words) >= 2:
+            return True
+
+    if any(w in NEGATIVE_WORDS for w in words):
+        return True
+
+    polarity = TextBlob(text).sentiment.polarity
+    print("DEBUG frustration check:", text, "polarity:", polarity)
+    return polarity < -0.4
+
+
+
+
 chat_context = {
     "last_category": None,
     "last_product": None,
@@ -313,24 +349,7 @@ def extract_possible_product_keyword(user_input: str):
 
 
 
-def detect_frustration(text: str) -> bool:
-    t = text.lower().strip()
 
-    if any(p in t for p in FRUSTRATION_PHRASES):
-        return True
-    if any(p in text for p in NEGATIVE_PUNCTUATION):
-        return True
-    if any(e in text for e in FRUSTRATION_EMOJIS):
-        return True
-
-    blob = TextBlob(text)
-    polarity = blob.sentiment.polarity
-
-    if polarity < -0.4: #negetive feeling
-        return True
-    print("DEBUG frustration check:", text, "polarity:", TextBlob(text).sentiment.polarity)
-
-    return False
 
 
 
@@ -535,6 +554,11 @@ def outfit_response_with_buttons(html):
         ]
     }
 
+def clear_outfit_context(chat_context):
+    chat_context["mode"] = None
+    chat_context["outfit_step"] = None
+    chat_context["outfit_prefs"] = {"occasion": None, "weather": None, "colors": [], "budget": None, "style": None}
+
 
 
 
@@ -589,25 +613,32 @@ def is_store_about_question(text: str) -> bool:
 
 
 
-
+def clean_measurement_text(text: str) -> str:
+    t = text.lower()
+    t = t.replace(",", " ").replace(";", " ").replace("|", " ")
+    #normalise weird punctuation
+    t = re.sub(r"[()\[\]{}]", " ", t)
+    #making multiple spaces collapse
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
 
 def parse_height_cm(text: str):
-    s = text.lower()
+    t = clean_measurement_text(text)
 
     # 177cm or 177 cm
-    m = re.search(r"(\d{2,3})\s*cm", s)
+    m = re.search(r"\b(\d{2,3})\s*cm\b", t)
     if m:
         return float(m.group(1))
 
     # 1.77m or 1.77 m
-    m = re.search(r"(\d(?:\.\d{1,2})?)\s*m", s)
+    m = re.search(r"\b(\d(?:\.\d{1,2})?)\s*m\b", t)
     if m:
         meters = float(m.group(1))
         if 1.2 <= meters <= 2.3:
             return meters * 100
 
     # 5'11 or 5' 11 or 5ft 11in or 5 ft 11
-    m = re.search(r"(\d)\s*(?:ft|')\s*(\d{1,2})?", s)
+    m = re.search(r"\b(\d)\s*(?:ft|')\s*(\d{1,2})?\s*(?:in|\"|)?\b", t)
     if m:
         ft = int(m.group(1))
         inch = int(m.group(2)) if m.group(2) else 0
@@ -617,15 +648,15 @@ def parse_height_cm(text: str):
 
 
 def parse_weight_kg(text: str):
-    s = text.lower()
+    t = clean_measurement_text(text)
 
     # 77kg or 77 kg or 77kgs
-    m = re.search(r"(\d{2,3}(?:\.\d{1,2})?)\s*(kg|kgs|kilogram|kilograms)", s)
+    m = re.search(r"\b(\d{2,3}(?:\.\d{1,2})?)\s*(kg|kgs|kilogram|kilograms)\b", t)
     if m:
         return float(m.group(1))
 
     # 180lb or 180 lbs or 180 pounds
-    m = re.search(r"(\d{2,3}(?:\.\d{1,2})?)\s*(lb|lbs|pound|pounds)", s)
+    m = re.search(r"\b(\d{2,3}(?:\.\d{1,2})?)\s*(lb|lbs|pound|pounds)\b", t)
     if m:
         return float(m.group(1)) * 0.45359237 #convert, 1lb = 0.45359237 kg
 
@@ -668,9 +699,9 @@ def recommend_size(height_cm: float, weight_kg: float, available_sizes): #using 
 def looks_like_measurements(text: str) -> bool:
     t = text.lower()
 
-    if re.search(r"\b(cm|kg|lb|lbs|kgs|kilogram|kilograms|pound|pounds)\b", t):
+    if re.search(r"(cm|kg|lb|lbs|kgs|kilogram|kilograms|pound|pounds)", t):
         return True
-    if re.search(r"\b\d\s*(ft|')\s*\d{0,2}\b", t):
+    if re.search(r"\b\d\s*(ft|')\s*\d{0,2}\s*(in|\"|)?\b", t):
         return True
     if re.search(r"\b\d{2,3}\s*cm\b", t):
         return True
@@ -680,24 +711,63 @@ def looks_like_measurements(text: str) -> bool:
     return False
 
 
+def clear_product_context(chat_context):
+    chat_context["active_product_id"] = None
+    if "size_helper" in chat_context:
+        chat_context["size_helper"]["awaiting"] = False
+        chat_context["size_helper"]["height_cm"] = None
+        chat_context["size_helper"]["weight_kg"] = None
 
 
 
 def chatbot_reply(user_input):
+    raw_input = user_input.strip()
     user_input = user_input.lower()
 
+
+    if chat_context.get("mode") != "outfit" and detect_frustration(raw_input.lower()):
+        chat_context["last_intent"] = None
+        return {
+            "response": (
+                "Sorry about that 😅 I can see this is frustrating. "
+                "Let’s try one of these options:"
+            ),
+            "buttons": [
+                {"label": "Help Menu", "value": "help"},
+                {"label": "Delivery Info", "value": "delivery"},
+                {"label": "Return Policy", "value": "return policy"},
+                {"label": "Customer Support", "value": "support"}
+            ]
+        }
+
+    cleaned_for_measure = clean_measurement_text(user_input)
+    skip_spell = (
+            chat_context.get("size_helper", {}).get("awaiting", False)
+            or looks_like_measurements(cleaned_for_measure)
+    )
+
     tokens = user_input.split()
-    corrected = []
-    UNIT_TOKENS = {"cm", "m", "kg", "kgs", "lb", "lbs", "ft", "in"}
-    for word in tokens:
-        w = word.lower().strip()
-        if any(ch.isdigit() for ch in w) or w in UNIT_TOKENS:
-            corrected.append(word)
-            continue
-        suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
-        corrected.append(suggestions[0].term if suggestions else word)
-    user_input = " ".join(corrected)
-    print("Corrected input:", user_input)  # for debugging, to see the corrected input
+    if not skip_spell:
+        corrected = []
+        UNIT_TOKENS = {"cm", "m", "kg", "kgs", "lb", "lbs", "ft", "in", "inch", "inches"}
+
+        for word in tokens:
+            w = word.lower().strip()
+            w_clean = re.sub(r"[^a-z0-9']", "", w)
+            if any(ch.isdigit() for ch in w) or w_clean in UNIT_TOKENS:
+                corrected.append(word)
+                continue
+
+            suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
+            corrected.append(suggestions[0].term if suggestions else word)
+        user_input = " ".join(corrected)
+    print("Corrected input:", user_input) # for debugging, to see the corrected input
+
+
+
+
+
+
 
 
     if user_input.strip() in ["try another outfit", "another outfit", "new outfit", "regen outfit"]:
@@ -733,7 +803,10 @@ def chatbot_reply(user_input):
     greetings = ["hi", "hello", "hey", "hya", "good morning", "good afternoon", "good evening"]
 
     for greet in greetings:
-        if user_input.strip() == greet or user_input.startswith(greet + " "):
+        #if user_input.strip() == greet or user_input.startswith(greet + " "):
+        clean = raw_input.lower().strip()
+        if clean == greet:
+            clear_product_context(chat_context)
             chat_context["last_intent"] = None
             return "Hi there! 👋 I'm your Customer Support Chatbot. How can I help you today? you can ask me to build an outfit, FAQs or whatever you want me to show you. 😊"
 
@@ -782,7 +855,7 @@ def chatbot_reply(user_input):
     active_id = chat_context.get("active_product_id")
     active_product = next((p for p in products if p["id"] == active_id), None) if active_id else None
 
-    if active_product and user_input.strip() in ["help", "menu", "product help", "about this"]:
+    if active_product and user_input.strip() in ["menu", "product help", "about this"]:
         return {
             "response": f"Sure! Ask me about <b>{active_product['name']}</b> 👇",
             "buttons": [
@@ -798,13 +871,20 @@ def chatbot_reply(user_input):
     # the size recommendation
     if active_product and chat_context.get("size_helper", {}).get("awaiting"):
 
-        if not looks_like_measurements(user_input):
+        if not looks_like_measurements(clean_measurement_text(user_input)):
             chat_context["size_helper"]["awaiting"] = False
             chat_context["size_helper"]["height_cm"] = None
             chat_context["size_helper"]["weight_kg"] = None
+            chat_context["active_product_id"] = None
         else:
-            h = parse_height_cm(user_input)
-            w = parse_weight_kg(user_input)
+            norm = user_input.lower()
+            norm = norm.replace(",", " ")
+            norm = norm.replace("|", " ").replace("\\", " ").replace("/", " ")
+            norm = norm.replace("+", " ").replace("-", " ")
+            norm = norm.replace(" and ", " ")
+
+            h = parse_height_cm(norm)
+            w = parse_weight_kg(norm)
 
             if h:
                 chat_context["size_helper"]["height_cm"] = h
@@ -822,8 +902,9 @@ def chatbot_reply(user_input):
 
             rec = recommend_size(height_cm, weight_kg, active_product.get("sizes", []))
             chat_context["size_helper"]["awaiting"] = False
-            chat_context["size_helper"]["height_cm"] = None
-            chat_context["size_helper"]["weight_kg"] = None
+            chat_context["active_product_id"] = None #gpt
+            chat_context["size_helper"]["height_cm"] = None #do I delete this?
+            chat_context["size_helper"]["weight_kg"] = None #and this?
 
             print("DEBUG size_helper awaiting:", chat_context["size_helper"])
             print("DEBUG parsed height/weight:", h, w)
@@ -910,6 +991,8 @@ def chatbot_reply(user_input):
 
 
     if user_input.strip() in ["help", "menu", "/help"]:
+        clear_product_context(chat_context)
+        chat_context["last_intent"] = None
         return {
             "response": "Here are some quick options 👇",
             "buttons": [
@@ -936,7 +1019,7 @@ def chatbot_reply(user_input):
 
 
 
-    if chat_context.get("mode") != "outfit" and detect_frustration(user_input): #disable detect_frustration while building an outfit #feeling detection
+    """if chat_context.get("mode") != "outfit" and detect_frustration(user_input): #disable detect_frustration while building an outfit #feeling detection
         chat_context["last_intent"] = None
         return {
             "response": (
@@ -949,7 +1032,7 @@ def chatbot_reply(user_input):
                 {"label": "Return Policy", "value": "return policy"},
                 {"label": "Customer Support", "value": "support"}
             ]
-        }
+        }"""
 
 
 
@@ -996,6 +1079,7 @@ def chatbot_reply(user_input):
 
 
     if any(x in user_input for x in ["outfit", "build an outfit", "outfit builder", "outfit idea", "pick an outfit", "make an outfit", "create an outfit"]):
+        clear_product_context(chat_context)
         chat_context["mode"] = "outfit"
         chat_context["outfit_step"] = "occasion"
         chat_context["outfit_prefs"] = {
@@ -1138,7 +1222,7 @@ def chatbot_reply(user_input):
     elif "return" in user_input or "refund" in user_input:
         return "↩️ You can return any item within 14 days of purchase, as long as it's unworn and in original packaging. You can follow the instructions in the return page to process your refunds and return the items"
 
-    elif "thank" in user_input or "love you" in user_input or "awesome" in user_input or "cool" in user_input or "Cheers" in user_input:
+    elif "thank" in user_input or "love you" in user_input or "awesome" in user_input or "cool" in user_input or "cheers" in user_input or "wow" in user_input:
         chat_context["last_intent"] = None
         return "I'm glad I could help! 😊 Let me know if you need help with anything else."
 
