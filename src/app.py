@@ -994,7 +994,7 @@ def chatbot_reply(user_input):
         clear_product_context(chat_context)
         chat_context["last_intent"] = None
         return {
-            "response": "Here are some quick options 👇",
+            "response": "Here are some quick options that could help you👇",
             "buttons": [
                 {"label": "T-Shirts", "value": "show me t-shirts"},
                 {"label": "Hoodies", "value": "show me hoodies"},
