@@ -1239,7 +1239,7 @@ def chatbot_reply(user_input):
     print("DEBUG filters:", filters)
 
     product_keywords = [
-        "show", "find", "do you have", "have you got",
+        "show", "find", "list" ,"do you have", "have you got",
         "looking for", "need", "want", "buy", "available"
     ]
 
@@ -1280,7 +1280,8 @@ def chatbot_reply(user_input):
 
     if asked_for_products:
 
-        all_phrases = ["show me all", "all products", "everything", "show everything", "show me everything"]
+        all_phrases = ["show me all", "all products", "everything", "show everything", "show me everything", "list all products", "list everything",
+                       "list every product", "show every product", "provide all products", "provide everything", "provide every product"]
         if any(p in user_input for p in all_phrases):
             return "You’ll probably find it easier to browse everything in the Store page (with pictures 😅). Try /store or click Store in the navbar!"
 
