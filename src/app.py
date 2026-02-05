@@ -5,6 +5,8 @@ import os
 import json
 import re
 import random
+from langdetect import detect, DetectorFactory
+from langcodes import Language
 
 
 
@@ -147,6 +149,33 @@ chat_context = {
         "weight_kg": None
     },
 }
+
+
+
+
+DetectorFactory.seed = 0
+
+def detect_non_english(user_input: str):
+    text = user_input.strip()
+    if len(text) < 0:
+        return None
+
+    letters = sum(c.isalpha() for c in text)
+    if letters < 3:
+        return None
+    try:
+        lang_code = detect(text)
+        if lang_code != "en":
+            language_name = Language.make(language = lang_code).display_name()
+            return language_name
+    except Exception:
+        pass
+    return None
+
+
+
+
+
 
 
 #finding the products functions
@@ -1209,6 +1238,16 @@ def chatbot_reply(user_input):
                     {"label": "Start new outfit", "value": "build me an outfit"}
                 ]
             }
+
+
+    #language detection
+    detected_lang = detect_non_english(user_input)
+    if detected_lang:
+        return (
+            f"I can see you’re trying to speak <b>{detected_lang}</b> 🌍<br>"
+            "At the moment, I can only understand <b>English</b>.<br>"
+            "If you can, please try again in English 😊"
+        )
 
     if ("hour" in user_input or "hours" in user_input or "time" in user_input) or ("open" in user_input and "store" in user_input):
         return "🕒 Our store is open Monday to Saturday, from 9 AM to 8 PM."
