@@ -1,11 +1,12 @@
 from flask import Flask, render_template, request, jsonify, redirect
+from nltk.sentiment.util import NEGATION_RE
 from symspellpy import SymSpell, Verbosity
 from textblob import TextBlob
 import os
 import json
 import re
 import random
-from langdetect import detect, DetectorFactory
+from langdetect import detect, DetectorFactory, detect_langs
 from langcodes import Language
 
 
@@ -80,6 +81,52 @@ category_aliases = {
 }
 
 
+
+MPQA_NEG_STRONG = set()
+MPQA_NEG_WEAK = set()
+
+def load_mpqa_lexicon(path: str):
+    strong = set()
+    weak = set()
+
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+
+                parts = {}
+                for token in line.split():
+                    if "=" in token:
+                        k, v = token.split("=", 1)
+                        parts[k] = v
+
+                word = parts.get("word1")
+                polarity = parts.get("priorpolarity")
+                strength = parts.get("type")  # strongsubj //// weaksubj
+
+                if not word or polarity != "negative":
+                    continue
+
+                word = word.lower()
+                if strength == "strongsubj":
+                    strong.add(word)
+                else:
+                    weak.add(word)
+
+    except FileNotFoundError:
+        print(f"MPQA file not found: {path}")
+    except Exception as e:
+        print(f"MPQA load error: {e}")
+
+    return strong, weak
+
+MPQA_NEG_STRONG, MPQA_NEG_WEAK = load_mpqa_lexicon("mpqa_lexicon.tff")
+print("MPQA loaded:", len(MPQA_NEG_STRONG), "strong neg,", len(MPQA_NEG_WEAK), "weak neg")
+
+
+
 FRUSTRATION_PHRASES = [
     "not working", "doesn't work", "doesnt work",
     "waste of time", "pissed off", "damn you", "damn it"
@@ -116,6 +163,13 @@ def detect_frustration(text: str) -> bool:
             return True
 
     if any(w in NEGATIVE_WORDS for w in words):
+        return True
+
+    strong_hits = sum(1 for w in words if w in MPQA_NEG_STRONG)
+    weak_hits = sum(1 for w in words if w in MPQA_NEG_WEAK)
+    if strong_hits >= 1:
+        return True
+    if weak_hits >= 2:
         return True
 
     polarity = TextBlob(text).sentiment.polarity
@@ -155,6 +209,33 @@ chat_context = {
 
 DetectorFactory.seed = 0
 
+EN_STOPWORDS = {
+    "i","you","he","she","we","they","it","a","an","the",
+    "is","are","was","were","to","of","and","or","in","on","for",
+    "with","this","that","what","how","why","can","do","does"
+}
+
+def should_run_language_detect(text: str) -> bool:
+    t = text.strip().lower()
+
+    letters = re.findall(r"[a-z]", t)
+    if len(letters) < 15:
+        return False
+    #if it's mostly normal ASCII letters/spaces/punct, probably English enough
+    ascii_ratio = sum(1 for ch in t if ord(ch) < 128) / max(1, len(t))
+    if ascii_ratio > 0.95:
+        #if it contains obvious English stopwords, skip detection
+        words = re.findall(r"[a-z']+", t)
+        if any(w in EN_STOPWORDS for w in words):
+            return False
+
+    #if it contains non-latin characters (Arabic, Cyrillic, etc) → worth detecting
+    if re.search(r"[^\x00-\x7F]", t):
+        return True
+
+    # otherwise: allow detection only for longer/unclear messages
+    return True
+
 def detect_non_english(user_input: str):
     text = user_input.strip()
     if len(text) < 0:
@@ -172,6 +253,19 @@ def detect_non_english(user_input: str):
         pass
     return None
 
+def detect_non_english_simple(text: str):
+    t = text.strip()
+
+    #Arabic Unicode ranges (most common)
+    if re.search(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]", t):
+        return "Arabic"
+
+    #If it contains lots of non-ASCII characters (likely non-English)
+    non_ascii = sum(1 for c in t if ord(c) > 127)
+    if non_ascii >= 3:
+        return "a non-English language"
+
+    return None
 
 
 
@@ -749,9 +843,28 @@ def clear_product_context(chat_context):
 
 
 
+
+
+def looks_like_product_reference(text: str) -> bool:
+    t = text.lower()
+
+    producty = [
+        "show", "find", "do you have", "have you got", "available",
+        "price", "cost", "stock", "sizes", "size", "colours", "colors",
+        "hoodie", "t-shirt", "tshirt", "jacket", "shoe", "shoes", "trouser", "jean", "pants"
+    ]
+    return any(k in t for k in producty)
+
+
+
 def chatbot_reply(user_input):
     raw_input = user_input.strip()
     user_input = user_input.lower()
+
+    if not looks_like_product_reference(user_input):
+        chat_context["last_product_list"] = []
+        chat_context["last_product"] = None
+        chat_context["last_category"] = None
 
 
     if chat_context.get("mode") != "outfit" and detect_frustration(raw_input.lower()):
@@ -775,8 +888,13 @@ def chatbot_reply(user_input):
             or looks_like_measurements(cleaned_for_measure)
     )
 
-    tokens = user_input.split()
+    skip_spell = False
+    if any(ord(c) > 127 for c in user_input):
+        skip_spell = True
+
+
     if not skip_spell:
+        tokens = user_input.split()
         corrected = []
         UNIT_TOKENS = {"cm", "m", "kg", "kgs", "lb", "lbs", "ft", "in", "inch", "inches"}
 
@@ -790,7 +908,7 @@ def chatbot_reply(user_input):
             suggestions = sym_spell.lookup(word, Verbosity.CLOSEST, max_edit_distance=2)
             corrected.append(suggestions[0].term if suggestions else word)
         user_input = " ".join(corrected)
-    print("Corrected input:", user_input) # for debugging, to see the corrected input
+        print("Corrected input:", user_input) # for debugging, to see the corrected input
 
 
 
@@ -1241,13 +1359,16 @@ def chatbot_reply(user_input):
 
 
     #language detection
-    detected_lang = detect_non_english(user_input)
-    if detected_lang:
+    lang = detect_non_english_simple(user_input)
+    if lang:
         return (
-            f"I can see you’re trying to speak <b>{detected_lang}</b> 🌍<br>"
+            f"I can see you’re trying to speak <b>{lang}</b> 🌍<br>"
             "At the moment, I can only understand <b>English</b>.<br>"
             "If you can, please try again in English 😊"
         )
+
+
+
 
     if ("hour" in user_input or "hours" in user_input or "time" in user_input) or ("open" in user_input and "store" in user_input):
         return "🕒 Our store is open Monday to Saturday, from 9 AM to 8 PM."
