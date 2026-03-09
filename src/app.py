@@ -124,7 +124,11 @@ def load_mpqa_lexicon(path: str):
 
     return strong, weak
 
-MPQA_NEG_STRONG, MPQA_NEG_WEAK = load_mpqa_lexicon("mpqa_lexicon.tff")
+#MPQA_NEG_STRONG, MPQA_NEG_WEAK = load_mpqa_lexicon("src/mpqa_lexicon.tff")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MPQA_PATH = os.path.join(BASE_DIR, "mpqa_lexicon.tff")
+
+MPQA_NEG_STRONG, MPQA_NEG_WEAK = load_mpqa_lexicon(MPQA_PATH)
 print("MPQA loaded:", len(MPQA_NEG_STRONG), "strong neg,", len(MPQA_NEG_WEAK), "weak neg")
 
 
@@ -916,7 +920,7 @@ def libretranslate_translate(text: str, source: str, target: str, fmt: str = "te
             data=body,
             headers={"Content-Type": "application/x-www-form-urlencoded"}
         )
-        with urllib.request.urlopen(req, timeout=8) as resp:
+        with urllib.request.urlopen(req, timeout=20) as resp: #timeout was 8
             payload = json.loads(resp.read().decode("utf-8"))
         return payload.get("translatedText")
     except Exception as e:
@@ -1783,8 +1787,8 @@ def get_chatbot_response():
 
             return jsonify({
                 "response": (
-                    f"I detected <b>{lang}</b>, but translation is temporarily unavailable (blocked by the translation server).<br>"
-                "Could you try again in <b>English</b> for now? 😊"
+                    f"I detected <b>{lang}</b>, but live translation is currently unavailable on this hosted version.<br>"
+                "Could you please try again in <b>English</b>, or use the local version for full multilingual support 😊"
                 )
              })
 
