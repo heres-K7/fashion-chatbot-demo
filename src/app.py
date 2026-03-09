@@ -8,7 +8,9 @@ import re
 import random
 from langdetect import detect, DetectorFactory, detect_langs
 from langcodes import Language
-
+import urllib.parse
+import urllib.request
+#library for translation
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -857,6 +859,74 @@ def looks_like_product_reference(text: str) -> bool:
 
 
 
+
+
+
+#translation
+#LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "https://libretranslate.com")
+#LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "https://libretranslate.de")
+LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "http://localhost:5000")
+LIBRETRANSLATE_API_KEY = os.environ.get("LIBRETRANSLATE_API_KEY", "")
+
+SUPPORTED_TRANSLATION_LANGS = {"ar", "fr", "es"}
+
+def is_arabic_text(s: str) -> bool:
+    return bool(re.search(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]", s))
+
+def detect_translation_lang(user_input: str):
+    text = user_input.strip()
+    if not text:
+        return None #returns None if we should treat it as english
+
+    if is_arabic_text(text):
+        return "ar" #arabic
+
+    letters = re.findall(r"[A-Za-zÀ-ÿ]", text)
+    if len(letters) < 8: #to avoid short text mis detecting
+        return None
+
+    try:
+        from langdetect import detect_langs
+        langs = detect_langs(text)
+        if not langs:
+            return None
+        top = langs[0] #eg fr:0.99
+        if top.lang in SUPPORTED_TRANSLATION_LANGS and top.prob >= 0.70:
+            return top.lang
+    except Exception:
+        return None
+    return None
+
+#return translated on success (using libre) or else don't
+def libretranslate_translate(text: str, source: str, target: str, fmt: str = "text") -> str | None:
+    try:
+        endpoint = LIBRETRANSLATE_URL.rstrip("/") + "/translate"
+        data = {
+            "q": text,
+            "source": source,
+            "target": target,
+            "format": fmt,
+
+        }
+        if LIBRETRANSLATE_API_KEY:
+            data["api_key"] = LIBRETRANSLATE_API_KEY
+        body = urllib.parse.urlencode(data).encode("utf-8")
+        req = urllib.request.Request(
+            endpoint,
+            data=body,
+            headers={"Content-Type": "application/x-www-form-urlencoded"}
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        return payload.get("translatedText")
+    except Exception as e:
+        print("debug translated error", e)
+        return None
+
+
+
+
+
 def chatbot_reply(user_input):
     raw_input = user_input.strip()
     user_input = user_input.lower()
@@ -1693,12 +1763,67 @@ def chat_page():
 @app.route("/get", methods=["POST"])
 def get_chatbot_response():
     user_input = request.form["message"]
-    response = chatbot_reply(user_input)
+
+    lang = detect_translation_lang(user_input)
+
+    print("DEBUG lang:", lang, "input:", user_input)
+
+    user_input_en = user_input #translate
+    if lang in SUPPORTED_TRANSLATION_LANGS:
+        translated = libretranslate_translate(
+            user_input,
+            source=lang,
+            target="en",
+            fmt="text"
+        )
+
+        if translated:
+            user_input_en = translated
+        else:
+
+            return jsonify({
+                "response": (
+                    f"I detected <b>{lang}</b>, but translation is temporarily unavailable (blocked by the translation server).<br>"
+                "Could you try again in <b>English</b> for now? 😊"
+                )
+             })
+
+    response = chatbot_reply(user_input_en)
+
+    if lang in SUPPORTED_TRANSLATION_LANGS: #bot reply back in user lang
+
+        if isinstance(response, dict): #structured payload
+            text = response.get("response", "")
+            translated_text = libretranslate_translate(text, source="en", target=lang, fmt="html")
+            if translated_text:
+                response["response"] = translated_text
+
+            if "buttons" in response and isinstance(response["buttons"], list): #translate button lbls
+                for btn in response["buttons"]:
+                    if isinstance(btn, dict) and "label" in btn:
+                        translated_label = libretranslate_translate(
+                            btn["label"],
+                            source="en",
+                            target=lang,
+                            fmt="text"
+                        )
+                        if translated_label:
+                            btn ["label"] = translated_label
+
+        else: #plain str
+            translated_text = libretranslate_translate(
+                str(response),
+                source="en",
+                target=lang,
+                fmt="html"
+            )
+            if translated_text:
+                response = translated_text
 
     if isinstance(response, dict):
         return jsonify(response)
-
     return jsonify({"response": response})
+
 
 @app.route("/store")
 def store_home():
