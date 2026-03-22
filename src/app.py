@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, redirect
+from flask import Flask, render_template, request, jsonify, redirect, session
 from nltk.sentiment.util import NEGATION_RE
 from symspellpy import SymSpell, Verbosity
 from textblob import TextBlob
@@ -19,6 +19,7 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, "../templates"),
     static_folder=os.path.join(BASE_DIR, "../static")
 )
+app.secret_key = "uob_fashion_chatbot_project_2026_secret"
 
 
 with open(os.path.join(BASE_DIR, "products.json"), "r") as file:
@@ -259,6 +260,7 @@ def detect_non_english(user_input: str):
         pass
     return None
 
+#detect language through unicode
 def detect_non_english_simple(text: str):
     t = text.strip()
 
@@ -549,7 +551,7 @@ def build_outfit(prefs):
     accs = accs_all[:]
 
 
-    if occasion == "work":
+    if occasion in ["work", "wedding"]:
         work_tops = [p for p in tops if is_cat(p, "shirt", "jacket")]
         if work_tops:
             tops = work_tops
@@ -867,12 +869,10 @@ def looks_like_product_reference(text: str) -> bool:
 
 
 #translation
-#LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "https://libretranslate.com")
-#LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "https://libretranslate.de")
-LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "http://localhost:5000")
+LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "http://localhost:5000")  #URL of the libretranslate service .. render or local
 LIBRETRANSLATE_API_KEY = os.environ.get("LIBRETRANSLATE_API_KEY", "")
 
-SUPPORTED_TRANSLATION_LANGS = {"ar", "fr", "es"}
+SUPPORTED_TRANSLATION_LANGS = {"ar", "fr", "es", "ru"} #supported languages
 
 def is_arabic_text(s: str) -> bool:
     return bool(re.search(r"[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]", s))
@@ -885,12 +885,16 @@ def detect_translation_lang(user_input: str):
     if is_arabic_text(text):
         return "ar" #arabic
 
+    #detect cyrillic-russian
+    if re.search(r"[\u0400-\u04FF]", text):
+        return "ru"
+
     letters = re.findall(r"[A-Za-zÀ-ÿ]", text)
     if len(letters) < 8: #to avoid short text mis detecting
         return None
 
     try:
-        from langdetect import detect_langs
+        from langdetect import detect_langs #detect language
         langs = detect_langs(text)
         if not langs:
             return None
@@ -905,7 +909,7 @@ def detect_translation_lang(user_input: str):
 def libretranslate_translate(text: str, source: str, target: str, fmt: str = "text") -> str | None:
     try:
         endpoint = LIBRETRANSLATE_URL.rstrip("/") + "/translate"
-        data = {
+        data = { #data payload sent to libre
             "q": text,
             "source": source,
             "target": target,
@@ -915,7 +919,7 @@ def libretranslate_translate(text: str, source: str, target: str, fmt: str = "te
         if LIBRETRANSLATE_API_KEY:
             data["api_key"] = LIBRETRANSLATE_API_KEY
         body = urllib.parse.urlencode(data).encode("utf-8")
-        req = urllib.request.Request(
+        req = urllib.request.Request( #create http post request to libre api
             endpoint,
             data=body,
             headers={"Content-Type": "application/x-www-form-urlencoded"}
@@ -929,6 +933,69 @@ def libretranslate_translate(text: str, source: str, target: str, fmt: str = "te
 
 
 
+
+def add_product_to_cart(product_id, quantity=1): #add product to cart
+    cart = session.get("cart", {}) #get current cart from session
+
+    product_id = str(product_id)
+
+    try:
+        quantity = int(quantity)
+    except ValueError:
+        quantity = 1
+
+    if quantity < 1:
+        quantity = 1
+
+    if product_id in cart:
+        cart[product_id] += quantity
+    else:
+        cart[product_id] = quantity
+
+    session["cart"] = cart
+
+def extract_quantity(user_input: str) -> int:
+    match = re.search(r"\b(\d+)\b", user_input)
+    if match:
+        return int(match.group(1))
+    return 1
+
+
+
+
+def has_cart_word(text: str) -> bool:
+    t = text.lower()
+    return any(word in t for word in ["cart", "basket", "checkout"])
+
+def has_add_word(text: str) -> bool:
+    t = text.lower()
+    return any(word in t for word in ["add", "put", "save"])
+
+def refers_to_outfit_items(text: str) -> bool:
+    words = re.findall(r"[a-z']+", text.lower())
+    return any(word in words for word in ["outfit", "these", "them", "all"])
+
+def normalise_text(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def remove_product_from_cart(product_id):
+    cart = session.get("cart", {})
+    product_id = str(product_id) #converting id to str and session stores it as string
+
+    if product_id in cart:
+        del cart[product_id]
+
+    session["cart"] = cart
+
+def has_show_word(text: str) -> bool:
+    return any(word in text.lower() for word in ["show", "open", "view", "go"])
+
+def has_remove_word(text: str) -> bool:
+    return any(word in text.lower() for word in ["remove", "delete"])
+
+def has_clear_word(text: str) -> bool:
+    return any(word in text.lower() for word in ["clear", "empty"])
 
 
 def chatbot_reply(user_input):
@@ -958,11 +1025,9 @@ def chatbot_reply(user_input):
 
     cleaned_for_measure = clean_measurement_text(user_input)
     skip_spell = (
-            chat_context.get("size_helper", {}).get("awaiting", False)
-            or looks_like_measurements(cleaned_for_measure)
+        chat_context.get("size_helper", {}).get("awaiting", False)
+        or looks_like_measurements(cleaned_for_measure)
     )
-
-    skip_spell = False
     if any(ord(c) > 127 for c in user_input):
         skip_spell = True
 
@@ -1051,6 +1116,7 @@ def chatbot_reply(user_input):
                 "• You can search by colour, like black jackets🔎<br>"
                 "• I answer common questions about opening hours, location, shipping, and returns🤔<br>"
                 "• I can also recommend sizes using the “Ask chatbot about this product 💬” button on product's pages📏<br>"
+                "• I can help you add/remove items to your cart or clear it, as well as adding the outfit I generate to you🛒<br>"
                 "<br>"
                 "Just tell me what you’re looking for!🌟"
                     )
@@ -1194,7 +1260,7 @@ def chatbot_reply(user_input):
 
 
 
-    raw_input = user_input.strip()
+    #raw_input = user_input.strip()
 
     quick_actions = {
         "/support": {"response": (
@@ -1240,20 +1306,118 @@ def chatbot_reply(user_input):
 
 
 
-    """if chat_context.get("mode") != "outfit" and detect_frustration(user_input): #disable detect_frustration while building an outfit #feeling detection
-        chat_context["last_intent"] = None
-        return {
-            "response": (
-                "Sorry about that 😅 I can see this is frustrating. "
-                "Let’s try one of these options:"
-            ),
-            "buttons": [
-                {"label": "Help Menu", "value": "help"},
-                {"label": "Delivery Info", "value": "delivery"},
-                {"label": "Return Policy", "value": "return policy"},
-                {"label": "Customer Support", "value": "support"}
-            ]
-        }"""
+
+
+
+
+
+
+    #showing cart
+    if has_show_word(user_input) and has_cart_word(user_input):
+        return 'Here is your cart 🛒<br><a href="/cart">Open cart</a>' #show cart
+
+    # clear cart
+    if has_clear_word(user_input) and has_cart_word(user_input):
+        session["cart"] = {}
+        return "Done — I cleared your cart 🛒"
+
+    # remove item from cart
+    if "remove" in user_input and any(x in user_input for x in ["cart", "basket"]):
+        normalised_user = normalise_text(raw_input) #remove spacing and punctuations
+
+        for product in products:
+            normalised_name = normalise_text(product["name"])
+
+            if normalised_name in normalised_user:
+                remove_product_from_cart(product["id"])
+                return (
+                    f"Removed <b>{product['name']}</b> from your cart 🛒<br>"
+                    f'<a href="/cart">Open cart</a>'
+                )
+
+        return "I can remove that from your cart 🛒 — which product would you like me to remove?"
+
+
+
+    # add whole outfit to cart
+    if has_add_word(user_input) and has_cart_word(user_input) and refers_to_outfit_items(user_input):
+        last_outfit = chat_context.get("last_outfit")
+
+        if not last_outfit:
+            return "I couldn't find a recent outfit to add. Try asking me to build an outfit first😊."
+
+        added_names = []
+
+        if isinstance(last_outfit, dict):
+            outfit_items = last_outfit.values()
+        else:
+            outfit_items = last_outfit
+
+        for item in outfit_items:
+            if isinstance(item, dict) and "id" in item:
+                add_product_to_cart(item["id"], 1)
+                added_names.append(item["name"])
+
+        if not added_names:
+            return "I found your recent outfit. but I couldn't add its items properly. Let's try generating it again😊"
+
+
+        chat_context["mode"] = None
+        chat_context["outfit_step"] = None
+
+        return (
+                "Added these outfit items to your cart 🛒<br>"
+                + "<br>".join(f"• {name}" for name in added_names)
+                + '<br><br><a href="/cart">Open cart</a>'
+        )
+
+
+
+
+
+
+
+    # add to cart intent
+
+    if has_add_word(user_input) and has_cart_word(user_input):
+        quantity = extract_quantity(raw_input)
+
+        normalised_user = normalise_text(raw_input)
+
+        for product in products:
+            normalised_name = normalise_text(product["name"])
+
+            if normalised_name in normalised_user:
+                add_product_to_cart(product["id"], quantity)
+                chat_context["last_product"] = product["name"]
+                chat_context["active_product_id"] = product["id"]
+
+                return (
+                    f"Added <b>{quantity}</b> × <b>{product['name']}</b> to your cart 🛒<br>"
+                    f'<a href="/cart">Open cart</a>'
+                )
+
+        active_id = chat_context.get("active_product_id")
+        active_product = next((p for p in products if p["id"] == active_id), None) if active_id else None
+
+        if active_product and any(x in user_input for x in ["add this", "add it", "put this", "put it"]):
+            add_product_to_cart(active_product["id"], quantity)
+            return (
+                f"Added <b>{quantity}</b> × <b>{active_product['name']}</b> to your cart 🛒<br>"
+                f'<a href="/cart">Open cart</a>'
+            )
+
+        print("debug raw_input:", raw_input)
+        print("debug normalised_user:", normalised_user)
+        for product in products:
+            print("debug comparing", normalise_text(product["name"]))
+
+        return "I can add that to your cart 🛒 — which product would you like me to add?"
+
+
+
+
+
 
 
 
@@ -1318,6 +1482,7 @@ def chatbot_reply(user_input):
             "buttons": [
                 {"label": "Casual", "value": "casual"},
                 {"label": "Work", "value": "work"},
+                {"label": "wedding", "value": "wedding"},
                 {"label": "Party", "value": "party"},
             ]
         }
@@ -1329,8 +1494,9 @@ def chatbot_reply(user_input):
         prefs = chat_context.get("outfit_prefs", {})
 
         if step == "occasion":
-            if any(o in user_input for o in ["casual", "work", "party"]):
+            if any(o in user_input for o in ["casual", "work", "wedding", "party"]):
                 if "work" in user_input: prefs["occasion"] = "work"
+                elif "wedding" in user_input: prefs["occasion"] = "wedding"
                 elif "party" in user_input: prefs["occasion"] = "party"
                 else: prefs["occasion"] = "casual"
 
@@ -1352,6 +1518,7 @@ def chatbot_reply(user_input):
                 "buttons": [
                     {"label": "Casual", "value": "casual"},
                     {"label": "Work", "value": "work"},
+                    {"label": "wedding", "value": "wedding"},
                     {"label": "Party", "value": "party"},
                 ]
             }
@@ -1512,6 +1679,7 @@ def chatbot_reply(user_input):
 
 
 
+    #product listing
     if asked_for_products:
 
         all_phrases = ["show me all", "all products", "everything", "show everything", "show me everything", "list all products", "list everything",
@@ -1774,7 +1942,7 @@ def get_chatbot_response():
 
     user_input_en = user_input #translate
     if lang in SUPPORTED_TRANSLATION_LANGS:
-        translated = libretranslate_translate(
+        translated = libretranslate_translate( #trnslate user input into english before bot processing
             user_input,
             source=lang,
             target="en",
@@ -1798,7 +1966,7 @@ def get_chatbot_response():
 
         if isinstance(response, dict): #structured payload
             text = response.get("response", "")
-            translated_text = libretranslate_translate(text, source="en", target=lang, fmt="html")
+            translated_text = libretranslate_translate(text, source="en", target=lang, fmt="html") #trnslate bot responses
             if translated_text:
                 response["response"] = translated_text
 
@@ -1849,6 +2017,74 @@ def product_page(product_id):
 @app.route("/support")
 def support_page():
     return render_template("support.html")
+
+@app.route("/cart")
+def cart_page():
+    cart = session.get("cart", {})
+    cart_items = []
+    total_price = 0
+
+    for product_id, quantity in cart.items():
+        product = next((p for p in products if str(p["id"]) == str(product_id)), None)
+
+        if product:
+            subtotal = product["price"] * quantity
+            total_price += subtotal
+
+            cart_items.append({
+                "product": product,
+                "quantity": quantity,
+                "subtotal": subtotal
+            })
+
+
+    return render_template(
+        "cart.html",
+        cart_items=cart_items,
+        total_price=total_price
+    )
+
+@app.route("/add-to-cart/<product_id>", methods=["POST"])
+def add_to_cart(product_id):
+    quantity = request.form.get("quantity", 1)
+
+    try:
+        quantity = int(quantity)
+    except ValueError:
+        quantity = 1
+
+    if quantity < 1:
+        quantity = 1
+
+    cart = session.get("cart", {})
+
+    if product_id in cart:
+        cart[product_id] += quantity
+    else:
+        cart[product_id] = quantity
+
+    session["cart"] = cart
+
+    return jsonify({
+        "success": True,
+        "message": f"Added to cart successfully.",
+        "cart": cart
+    })
+
+@app.route("/clear-cart", methods=["POST"])
+def clear_cart():
+    session["cart"] = {}
+    return jsonify({"success": True})
+
+@app.route("/remove-from-cart/<product_id>", methods=["POST"])
+def remove_from_cart(product_id):
+    cart = session.get("cart", {})
+
+    if product_id in cart:
+        del cart[product_id]
+
+    session["cart"] = cart
+    return jsonify({"success": True, "cart": cart})
 
 @app.route("/chat/<int:product_id>")
 def chat_about_product(product_id):

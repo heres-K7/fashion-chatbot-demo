@@ -25,6 +25,17 @@
         </div>
         {% endif %}
 
+        <!-- add to cart button -->
+        <button
+                type="button"
+                class="add-cart-btn"
+                id="addCartBtn"
+                data-product-id="{{ product.id }}"
+        >
+            Add to Cart 🛒
+        </button>
+
+        <!-- ask chatbot button-->
         <button
                 type="button"
                 class="ask-bot-btn"
@@ -35,4 +46,35 @@
         </button>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const addCartBtn = document.getElementById("addCartBtn");
+
+        if (addCartBtn) {
+            addCartBtn.addEventListener("click", async () => {
+
+                const productId = addCartBtn.dataset.productId;
+
+                const res = await fetch(`/add-to-cart/${productId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams({ quantity: 1 })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    alert("Added to cart ✅");
+                } else {
+                    alert("Could not add to cart❌");
+                }
+            });
+        }
+
+    });
+</script>
 {% endblock %}

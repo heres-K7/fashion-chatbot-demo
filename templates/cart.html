@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Your Cart{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+    <h1>Your Cart</h1>
+
+    {% if cart_items %}
+    <div class="cart-list">
+        {% for item in cart_items %}
+        <div class="cart-item">
+            <img src="/static/product_images/{{ item.product.image }}" alt="{{ item.product.name }}" class="cart-item-img">
+
+            <div class="cart-item-info">
+                <h3>{{ item.product.name }}</h3>
+                <p>Price: £{{ "%.2f"|format(item.product.price) }}</p>
+                <p>Quantity: {{ item.quantity }}</p>
+                <p>Subtotal: £{{ "%.2f"|format(item.subtotal) }}</p>
+
+                <button
+                        type="button"
+                        class="remove-cart-item-btn"
+                        data-product-id="{{ item.product.id }}"
+                >
+                    Remove this item
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="cart-summary">
+        <h2>Total: £{{ "%.2f"|format(total_price) }}</h2>
+        <button type="button" id="clearCartBtn" class="clear-cart-btn">
+            Clear Cart
+        </button>
+    </div>
+    {% else %}
+    <p>Your cart is empty.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const clearCartBtn = document.getElementById("clearCartBtn");
+
+        if (clearCartBtn) {
+            clearCartBtn.addEventListener("click", async () => {
+                const res = await fetch("/clear-cart", {
+                    method: "POST"
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                }
+            });
+        }
+
+        document.querySelectorAll(".remove-cart-item-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const productId = btn.dataset.productId;
+
+                const res = await fetch(`/remove-from-cart/${productId}`, {
+                    method: "POST"
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    window.location.reload();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
