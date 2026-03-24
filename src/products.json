@@ -365,7 +365,7 @@
   },
   {
     "id": 17,
-    "name": "Blue Slim-Fit Jeans",
+    "name": "Blue Jeans",
     "category": "Bottoms",
     "price": 54.99,
     "stock": 10,
@@ -464,7 +464,7 @@
   },
   {
     "id": 22,
-    "name": "Slip-On Canvas Shoes",
+    "name": "Slip On Canvas",
     "category": "Shoes",
     "price": 49.99,
     "stock": 9,

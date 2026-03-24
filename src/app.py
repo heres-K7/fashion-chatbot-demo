@@ -48,6 +48,8 @@ custom_greetings = [
 for p in products:
     sym_spell.create_dictionary_entry(p["name"].lower(), 1)
     sym_spell.create_dictionary_entry(p["category"].lower(), 1)
+    for word in p["name"].lower().replace("-", " ").split():
+        sym_spell.create_dictionary_entry(word, 1)
 
 # adding the extra words to dictionary
 for w in custom_store_words:
@@ -221,6 +223,9 @@ EN_STOPWORDS = {
     "is","are","was","were","to","of","and","or","in","on","for",
     "with","this","that","what","how","why","can","do","does"
 }
+
+def tokenise_text(text: str):
+    return re.findall(r"[a-z0-9]+", text.lower())
 
 def should_run_language_detect(text: str) -> bool:
     t = text.strip().lower()
@@ -879,26 +884,45 @@ def is_arabic_text(s: str) -> bool:
 
 def detect_translation_lang(user_input: str):
     text = user_input.strip()
+    t = text.lower()
     if not text:
-        return None #returns None if we should treat it as english
+        return None
+
+    internal_commands = {
+        "help", "menu", "/help", "support",
+        "email support", "open support page",
+        "delivery", "return policy",
+        "show me t-shirts", "show me hoodies",
+        "show me jackets", "show me shoes",
+        "show my cart", "open cart", "clear my cart"
+    }
+    if t in internal_commands:
+        return None
+
 
     if is_arabic_text(text):
-        return "ar" #arabic
+        return "ar"
 
-    #detect cyrillic-russian
+    # detect cyrillic-russian
     if re.search(r"[\u0400-\u04FF]", text):
         return "ru"
 
+    #avoid false positives on short ascii English phrases
+    letters_ascii = re.findall(r"[A-Za-z]", text)
+    if all(ord(c) < 128 for c in text) and len(letters_ascii) < 20:
+        return None
+
+    # avoid misdetecting very short inputs in general
     letters = re.findall(r"[A-Za-zÀ-ÿ]", text)
-    if len(letters) < 8: #to avoid short text mis detecting
+    if len(letters) < 8:
         return None
 
     try:
-        from langdetect import detect_langs #detect language
         langs = detect_langs(text)
         if not langs:
             return None
-        top = langs[0] #eg fr:0.99
+
+        top = langs[0]
         if top.lang in SUPPORTED_TRANSLATION_LANGS and top.prob >= 0.70:
             return top.lang
     except Exception:
@@ -1275,9 +1299,23 @@ def chatbot_reply(user_input):
     if raw_input in quick_actions:
         return quick_actions[raw_input]
 
+    # handling support-specific messages
+    if user_input.strip() == "support" or any(word in user_input for word in [
+        "customer support", "helpdesk", "contact", "email",
+        "complaint", "complain", "human", "agent", "associate"
+    ]):
+        clear_product_context(chat_context)
+        chat_context["last_intent"] = None
+        return {
+            "response": "Customer Support options 👇: you can raise your complaint, report a technical issue via support team's email. Stay rested, and the team will sort out your raise.😊",
+            "buttons": [
+                {"label": "Open Support Page", "value": "open support page"},
+                {"label": "Email Support", "value": "email support"}
+            ]
+        }
 
-
-    if user_input.strip() in ["help", "menu", "/help"]:
+    # handling generic help/menu messages
+    if "help" in user_input or user_input.strip() in ["menu", "/help"]:
         clear_product_context(chat_context)
         chat_context["last_intent"] = None
         return {
@@ -1292,18 +1330,6 @@ def chatbot_reply(user_input):
                 {"label": "Customer Support", "value": "support"}
             ]
         }
-
-
-    #handling support, etc. messages
-    if any(word in user_input for word in ["support", "customer support", "helpdesk", "contact", "email", "complaint", "complain", "human", "agent", "associate"]):
-        return {
-            "response": "Customer Support options 👇: you can raise your complaint, report a technical issue via support team's email. Stay rested, and the team will sort out your raise.😊",
-            "buttons": [
-                {"label": "Open Support Page", "value": "open support page"},
-                {"label": "Email Support", "value": "email support"}
-            ]
-        }
-
 
 
 
@@ -1636,12 +1662,53 @@ def chatbot_reply(user_input):
         return "I'm just a helpful bot 😄 How can I assist you today?"
 
 
+    elif chat_context.get("last_product_list") and (
+            "one" in user_input or
+            "that" in user_input or
+            any(adj in user_input for adj in [
+                "black", "plain", "blue", "red", "white", "green", "orange",
+                "purple", "pink", "brown", "gray", "mona", "monalisa"
+            ])
+    ):
+
+        noise_words = {"one", "that", "this", "is", "a", "an", "the", "it", "in", "on", "for", "to", "of", "and", "are"}
+        user_words = [
+            w for w in tokenise_text(user_input)
+            if w not in noise_words and len(w) > 2
+        ]
+        possible_matches = []
+
+        for product_name in chat_context["last_product_list"]:
+            product_words = tokenise_text(product_name)
+
+            for word in user_words:
+                if word in product_words:
+                    possible_matches.append(product_name)
+                    break
+
+        if possible_matches:
+            chosen_product = possible_matches[0]
+            chat_context["last_product"] = chosen_product
+            if any(k in user_input for k in ["price", "cost"]):
+                return get_product_price(chosen_product)
+            if any(k in user_input for k in ["stock", "quantity", "available"]):
+                return get_product_stock(chosen_product)
+            if any(k in user_input for k in ["size", "sizes"]):
+                return get_product_sizes(chosen_product)
+            if any(k in user_input for k in ["color", "colour", "colors", "colours"]):
+                return get_product_colors(chosen_product)
+
+            return f"Are you referring to the {chosen_product}? Would you like to know its price, stock, or colours?"
+        return "Could you tell me which product you’re referring to?"
+
+
+
     filters = parse_product_query(user_input) #detect when to search based on user's asking
     print("DEBUG filters:", filters)
 
     product_keywords = [
         "show", "find", "list" ,"do you have", "have you got",
-        "looking for", "need", "want", "buy", "available"
+        "looking for", "want", "buy", "available"
     ]
 
     asked_for_products = (
@@ -1655,10 +1722,18 @@ def chatbot_reply(user_input):
 
 
 
-    cleaned = user_input.replace(" ", "").lower()
+
+    #cleaned = user_input.replace(" ", "").lower()
+    user_clean_regex = re.sub(r"[^a-z0-9]", "", user_input.lower())
     for p in products:
-        pname_clean = p["name"].lower().replace(" ", "")
-        if pname_clean in cleaned:
+        #pname_clean = p["name"].lower().replace(" ", "")
+        pname_clean_regex = re.sub(r"[^a-z0-9]", "", p["name"].lower())
+        #if pname_clean in cleaned:
+        if (
+             pname_clean_regex in user_clean_regex or
+            (len(user_clean_regex) > 3 and user_clean_regex in pname_clean_regex) or
+            p["name"].lower() in user_input.lower()
+        ):
             chat_context["last_product"] = p["name"]
             chat_context["last_category"] = None
             chat_context["last_intent"] = None
@@ -1807,21 +1882,23 @@ def chatbot_reply(user_input):
 
 
     elif any(
-        product["name"].lower().replace(" ", "") in user_input.replace(" ", "") or
-        user_input.replace(" ", "") in product["name"].lower().replace(" ", "") or
-        product["name"].lower() in user_input
+            (
+                    re.sub(r"[^a-z0-9]", "", product["name"].lower()) in re.sub(r"[^a-z0-9]", "", user_input) or
+                    (len(re.sub(r"[^a-z0-9]", "", user_input)) > 3 and re.sub(r"[^a-z0-9]", "", user_input) in re.sub(r"[^a-z0-9]", "", product["name"].lower())) or
+                    product["name"].lower() in user_input
+            )
         for product in products
     ):
+        user_clean = re.sub(r"[^a-z0-9]", "", user_input)
 
 
         for product in products:
-            product_name_no_spaces = product["name"].lower().replace(" ", "")
-            user_no_spaces = user_input.replace(" ", "")
+            product_clean = re.sub(r"[^a-z0-9]", "", product["name"].lower())
 
             if (
-                product_name_no_spaces in user_no_spaces or
-                user_no_spaces in product_name_no_spaces or
-                product["name"].lower() in user_input
+                    product_clean in user_clean or
+                    (len(user_clean) > 3 and user_clean in product_clean) or
+                    product["name"].lower() in user_input
             ):
                 chat_context["last_product"] = product["name"]
 
@@ -1836,7 +1913,8 @@ def chatbot_reply(user_input):
                     f"You mentioned <b>{product['name']}</b>. "
                     f"Would you like to know its price, stock, sizes or colours?"
                     f"<br><br>"
-                    f"{product_preview_card(product)}"
+                    #f"{product_preview_card(product)}"
+                    f"{card}"
                 )
 
 
@@ -1860,43 +1938,7 @@ def chatbot_reply(user_input):
                     plural_name = pluralize(base_category)
                     return f"Sorry, we don't have any {plural_name} in stock right now."
 
-    elif (
-            "one" in user_input or
-            "that" in user_input or
-            any(adj in user_input for adj in [
-                "black", "plain", "blue", "red", "white", "green", "orange",
-                "purple", "pink", "brown", "gray", "mona", "monalisa"
-            ])
-    ):
-        if chat_context["last_product_list"]:
-            user_words = [w.lower() for w in user_input.split() if w.isalpha() or w.isalnum()] #split maeningful words
-            possible_matches = []
 
-            for product_name in chat_context["last_product_list"]:
-                product_clean = product_name.lower().replace(" ", "")
-
-                for word in user_words:
-                    if word in product_clean or word in product_name.lower():
-                        possible_matches.append(product_name)
-                        break #stop after match
-
-            if possible_matches:
-                chosen_product = possible_matches[0]
-                chat_context["last_product"] = chosen_product
-
-                #respond directly if word found
-                if any(k in user_input for k in ["price", "cost"]):
-                    return get_product_price(chosen_product)
-                if any(k in user_input for k in ["stock", "quantity", "available"]):
-                    return get_product_stock(chosen_product)
-                if any(k in user_input for k in ["size", "sizes"]):
-                    return get_product_sizes(chosen_product)
-                if any(k in user_input for k in ["color", "colour", "colors", "colours"]):
-                    return get_product_colors(chosen_product)
-
-                return f"Are you referring to the {chosen_product}? Would you like to know its price, stock, or colours?"
-
-        return "Could you tell me which product you’re referring to?"
 
 
 
