@@ -1213,9 +1213,9 @@ def chatbot_reply(user_input):
 
             rec = recommend_size(height_cm, weight_kg, active_product.get("sizes", []))
             chat_context["size_helper"]["awaiting"] = False
-            chat_context["active_product_id"] = None #gpt
-            chat_context["size_helper"]["height_cm"] = None #do I delete this?
-            chat_context["size_helper"]["weight_kg"] = None #and this?
+            chat_context["active_product_id"] = None
+            chat_context["size_helper"]["height_cm"] = None
+            chat_context["size_helper"]["weight_kg"] = None
 
             print("DEBUG size_helper awaiting:", chat_context["size_helper"])
             print("DEBUG parsed height/weight:", h, w)
@@ -1489,7 +1489,7 @@ def chatbot_reply(user_input):
 
 
 
-    if any(x in user_input for x in ["outfit", "build an outfit", "outfit builder", "outfit idea", "pick an outfit", "make an outfit", "create an outfit"]):
+    if any(x in user_input for x in ["outfit", "build an outfit", "outfit builder", "outfit idea", "pick an outfit", "make an outfit", "create an outfit", "generate an outfit", "generate outfit", "build outfit", "do an outfit", "do outfit", "create outfit", "pick outfit"]):
         clear_product_context(chat_context)
         chat_context["mode"] = "outfit"
         chat_context["outfit_step"] = "occasion"
